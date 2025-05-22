@@ -1,0 +1,35 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+use crate::{globals::{INST2BESTASK, INST2BESTASK_DEPTH, INST2BESTBID, INST2BESTBID_DEPTH}, models::{OperationType, OrderBook}};
+
+pub fn get_timestamp(start: SystemTime) -> Result<u64, std::time::SystemTimeError> {
+    let since_epoch = start.duration_since(UNIX_EPOCH)?;
+    Ok(since_epoch.as_secs() * 1000 + u64::from(since_epoch.subsec_nanos()) / 1_000_000)
+}
+
+pub fn generate_nanoid() -> String {
+    let alphabet: &[char] = &[
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+        'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    ];
+    nanoid::nanoid!(29, alphabet)
+}
+
+
+pub fn spot_generate_client_order_id(operation: &OperationType, nanoid: &str) -> String {
+    if *operation == OperationType::Open2 {
+        format!("so2{}", nanoid)
+    } else {
+        format!("sc2{}", nanoid)
+    }
+}
+
+pub fn futures_generate_client_order_id(operation: &OperationType, nanoid: &str) -> String {
+    if *operation == OperationType::Open2 {
+        format!("fo2{}", nanoid)
+    } else {
+        format!("fc2{}", nanoid)
+    }
+}
+

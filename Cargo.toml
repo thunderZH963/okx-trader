@@ -1,0 +1,47 @@
+[package]
+name = "okx-rs"
+version = "0.0.1"
+edition = "2021"
+keywords = ["okx", "crypto", "exchange", "trading"]
+
+[dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
+thiserror = "1"
+base64 = "0.13"
+serde_derive = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["arbitrary_precision"] }
+serde_qs = "0.10.1"
+serde_with = "3.7.0"
+url = "2"
+sha2 = { version = "0.10", default-features = false }
+digest = { version = "0.10", features = ["dev"] }
+hmac = { version = "0.12.1", features = [] }
+const_format = "0.2"
+tokio-tungstenite = {version="0.15", features = ["native-tls"]}
+env_logger = "0.10.0"
+# optional
+tokio = { version = "1.0.0", features = ["full"]}
+simd-json = { version = "0.13.4", features = ["runtime-detection", "known-key"], optional = true }
+log = { version = "0.4.20", optional = true }
+rust_decimal = "1.22"
+# FIXME: to be removed
+futures-util = "0.3.28"
+ordered-float = "2.6"
+lazy_static = "1.4"
+ndarray = "0.15"
+
+nanoid = "*"
+# FIXME: should be feature-gated
+reqwest = { version = "0.11.22", features = ["json", "blocking"] }
+chrono = "0.4.38"
+
+dotenv = { version = "0.15.0" }
+ctrlc = "3.2.0"
+
+[dev-dependencies]
+
+[features]
+default = ["dep:log"]
+vip = []
+simd = ["dep:simd-json"]
