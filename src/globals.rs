@@ -40,6 +40,13 @@ lazy_static! {
 }
 
 lazy_static! {
+    pub static ref INST2CTVAL: tokio::sync::Mutex<HashMap<String, Decimal>> = {
+        let mut map = HashMap::new();
+        tokio::sync::Mutex::new(map)
+    };
+}
+
+lazy_static! {
     pub static ref DEPTH_MAP: Mutex<HashMap<String, (BTreeMap<Decimal, (Decimal, Decimal)>, BTreeMap<Decimal, (Decimal, Decimal)>)>> = Mutex::new(HashMap::new());
 }
 
@@ -95,6 +102,13 @@ pub async fn init_trade_signals() {
     });
 
     trade_signals.insert("TRUMP-USDT".to_string(), TradeSignal {
+        threshold_2_open: Some(-1.0),
+        threshold_2_close: Some(-0.0010639728302795882),
+        threshold_2_number: Some(6032261.039185599),
+        threshold_2_caution: Some(0.0),
+    });
+
+    trade_signals.insert("ADA-USDT".to_string(), TradeSignal {
         threshold_2_open: Some(-1.0),
         threshold_2_close: Some(-0.0010639728302795882),
         threshold_2_number: Some(6032261.039185599),

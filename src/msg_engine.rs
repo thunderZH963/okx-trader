@@ -6,13 +6,16 @@ use rust_decimal::prelude::*;
 pub async fn process_instruments_message(data: &Value) {
     let mut inst2lotsz = INST2LOTSZ.lock().await;
     let mut inst2minsz = INST2MINSZ.lock().await;
+    let mut inst2ctval = INST2CTVAL.lock().await;
     for instrument in data.as_array().unwrap_or(&vec![]) {
         let inst_id = instrument["instId"].to_string();
         let lotSz = instrument["lotSz"].to_string();
         let minSz = instrument["minSz"].to_string();  
+        let ct_val = instrument["ctVal"].to_string();
         inst2lotsz.insert(inst_id.clone(), Decimal::from_str(&lotSz).unwrap_or(Decimal::ZERO));
         inst2minsz.insert(inst_id.clone(), Decimal::from_str(&minSz).unwrap_or(Decimal::ZERO));
-        println!("Instruments handler handles update msg: inst_id {:?}, lotsz {:?} and minsz {:?}", inst_id, lotSz, minSz);
+        inst2ctval.insert(inst_id.clone(), Decimal::from_str(&ct_val).unwrap_or(Decimal::ZERO));
+        println!("Instruments handler handles update msg: inst_id {:?}, lotsz {:?}, minsz {:?} and ctval {:?}", inst_id, lotSz, minSz, ct_val);
     }
 }
 

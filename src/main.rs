@@ -57,8 +57,8 @@ async fn main() {
     /*
      * Some Necessary Values Initialization
      */
-    let spot_inst_ids = vec!["TRUMP-USDT",]; //现货类型
-    let swap_inst_ids = vec!["TRUMP-USDT-SWAP", ]; //合约类型
+    let spot_inst_ids = vec!["ADA-USDT",]; //现货类型
+    let swap_inst_ids = vec!["ADA-USDT-SWAP", ]; //合约类型
     init_ccy2bal(spot_inst_ids.clone()).await;
     init_ccy2bal(swap_inst_ids.clone()).await;
     {
@@ -205,17 +205,23 @@ async fn main() {
     let response_spot_parsed_msg: Value = serde_json::from_str(&response_spot_str).expect("Failed to parse JSON");
     let response_swap_parsed_msg: Value = serde_json::from_str(&response_swap_str).expect("Failed to parse JSON");
     {
+        println!("{}", response_swap_parsed_msg);
+        println!("{}", response_spot_parsed_msg);
         let mut inst2lotsz = INST2LOTSZ.lock().await;
         let mut inst2minsz = INST2MINSZ.lock().await;
+        let mut inst2ctval = INST2CTVAL.lock().await;
         for response_spot in response_spot_parsed_msg.as_array().unwrap_or(&vec![]) {
             let inst_id = response_spot["instId"].as_str().unwrap_or("");
             let lot_sz = response_spot["lotSz"].as_str().unwrap_or("");
             let lot_sz: Decimal = Decimal::from_str(lot_sz).unwrap_or(Decimal::ZERO);
             let min_sz = response_spot["minSz"].as_str().unwrap_or("");
             let min_sz: Decimal = Decimal::from_str(min_sz).unwrap_or(Decimal::ZERO);
+            let ct_val = response_spot["ctVal"].as_str().unwrap_or("");
+            let ct_val: Decimal = Decimal::from_str(ct_val).unwrap_or(Decimal::ZERO);
             if spot_inst_ids.contains(&inst_id) {
                 inst2lotsz.insert(inst_id.to_string(), lot_sz);
                 inst2minsz.insert(inst_id.to_string(), min_sz);
+                inst2ctval.insert(inst_id.to_string(), ct_val);
             }
         }
         for response_swap in response_swap_parsed_msg.as_array().unwrap_or(&vec![]) {
@@ -223,13 +229,16 @@ async fn main() {
             let lot_sz = response_swap["lotSz"].as_str().unwrap_or("");
             let lot_sz: Decimal = Decimal::from_str(lot_sz).unwrap_or(Decimal::ZERO);
             let min_sz = response_swap["minSz"].as_str().unwrap_or("");
+            let ct_val = response_swap["ctVal"].as_str().unwrap_or("");
+            let ct_val: Decimal = Decimal::from_str(ct_val).unwrap_or(Decimal::ZERO);
             let min_sz: Decimal = Decimal::from_str(min_sz).unwrap_or(Decimal::ZERO);
             if swap_inst_ids.contains(&inst_id) {
                 inst2lotsz.insert(inst_id.to_string(), lot_sz);
                 inst2minsz.insert(inst_id.to_string(), min_sz);
+                inst2ctval.insert(inst_id.to_string(), ct_val);
             }
         }
-        println!("Rest API for GET instruments full data: lotsz is {:?} and minsz is {:?}", inst2lotsz, inst2minsz);
+        println!("Rest API for GET instruments full data: lotsz is {:?}, minsz is {:?} and ctval is {:?}", inst2lotsz, inst2minsz, inst2ctval);
     }
     
     /*
@@ -340,10 +349,11 @@ async fn main() {
                 let mut swap_min_size = Decimal::new(0, 0);
                 let mut balance_usdt = Decimal::new(0, 0);
                 let mut position_spot = Decimal::new(0, 0);
-                
+                let mut swap_ctval = Decimal::new(0, 0);
                 {
                     let mut inst2lotsz = INST2LOTSZ.lock().await;
                     let mut inst2minsz = INST2MINSZ.lock().await;
+                    let mut inst2ctval = INST2CTVAL.lock().await;
                     
                     spot_lot_size = inst2lotsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
                     swap_lot_size = inst2lotsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
@@ -351,6 +361,7 @@ async fn main() {
                     spot_min_size = inst2minsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
                     swap_min_size = inst2minsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
                     lot_size = spot_lot_size.max(swap_lot_size);
+                    swap_ctval = inst2ctval.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
                 }
                 {
                     let ccy2bal = CCY2BAL.lock().await;
@@ -367,8 +378,8 @@ async fn main() {
                     }
                 };
                 
-                println!("###############Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
-                                                                spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, balance_usdt, position_spot, constraint_percent_qty);
+                println!("###############Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
+                                                                spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_spot, constraint_percent_qty);
                 
                 /*
                  * Get basis trade qty
@@ -425,7 +436,7 @@ async fn main() {
                 println!("###############Basic Order Qty Calculator: trade_qty={:?}, unit_price_spot={:?} and unit_price_swap={:?}", trade_qty, unit_price_spot, unit_price_swap);
 
                 if is_open {
-                    let mut spot_delta = 0.0;
+                    let spot_delta;
                     {
                         let mut local_deltas_spot = LOCAL_DELTAS_SPOT.lock().await;
                         if let Some(v) = local_deltas_spot.get(&spot_inst_id) {
@@ -484,13 +495,13 @@ async fn main() {
                 }
 
                 
-                trade_qty_decimal = Decimal::new(1, 0); //TODO: set by hard code
+                trade_qty_decimal = Decimal::new(0, 0); //TODO: set by hard code
 
                 if trade_qty_decimal.to_f64().unwrap() <= 0.0 { // Check if quantity is valid
                     continue;
                 }
                 trade_qty_decimal = (trade_qty_decimal / lot_size).floor() * lot_size;
-                trade_qty_decimal = Decimal::new(1, 0); //TODO: set by hard code
+                trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
                 if trade_qty_decimal < spot_min_size // Lot size constraint
                     || trade_qty_decimal < swap_min_size
                 {
@@ -522,7 +533,7 @@ async fn main() {
                         inst_id: swap_inst_id,
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
-                        sz: trade_qty_decimal.to_string(),
+                        sz: (trade_qty_decimal / swap_ctval).to_string(),
                     };
                     tx_compute.send((order_spot, order_swap)).await.unwrap();
 
@@ -541,7 +552,7 @@ async fn main() {
                         inst_id: swap_inst_id,
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
-                        sz: trade_qty_decimal.to_string(),
+                        sz: (trade_qty_decimal / swap_ctval).to_string(),
                     };
                     tx_compute.send((order_spot, order_swap)).await.unwrap();
                 }
