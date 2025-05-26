@@ -249,4 +249,33 @@ pub mod websocket {
             .to_string()
         }
     }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct OrdersInfoChannel {
+        pub inst_type: InstrumentType,
+        pub inst_id: String,
+    }
+
+    impl WebsocketChannel for OrdersInfoChannel {
+        const CHANNEL: &'static str = "orders";
+        const AUTH: bool = true;
+        type Response<'de> = Vec<PositionDetail>;
+        type ArgType<'de> = PositionsArg<'de>;
+
+        fn subscribe_message(&self) -> String {
+            json!({
+                "op": "subscribe",
+                "args": [
+                    {
+                        "channel": Self::CHANNEL,
+                        "instType": self.inst_type,
+                        "instId": self.inst_id,
+                    }
+                ]
+            })
+            .to_string()
+        }
+    }
+
+    
 }

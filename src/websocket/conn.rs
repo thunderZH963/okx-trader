@@ -29,7 +29,7 @@ pub struct Books5 {
     pub inst_id: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
     pub id: String,

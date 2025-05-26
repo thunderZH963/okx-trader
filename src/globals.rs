@@ -1,8 +1,10 @@
 use std::collections::{HashMap, BTreeMap};
 use rust_decimal::Decimal;
 use crate::models::TradeSignal;
-use lazy_static::lazy_static;
 use std::sync::Mutex;
+use tokio::sync::RwLock;
+
+use lazy_static::lazy_static;
 
 lazy_static::lazy_static! {
     pub static ref GLOBAL_TRADE_SIGNALS: tokio::sync::Mutex<HashMap<String, TradeSignal>> = {
@@ -83,6 +85,15 @@ lazy_static! {
         let mut map = HashMap::new();
         tokio::sync::Mutex::new(map)
     };
+}
+
+lazy_static! {
+    #[derive(Debug)]
+    pub static ref INST_STATE_MAP: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
+}
+
+lazy_static::lazy_static! {
+    pub static ref ORDERID2INST: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
 pub async fn init_trade_signals() {

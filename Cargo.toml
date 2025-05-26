@@ -25,6 +25,7 @@ tokio = { version = "1.0.0", features = ["full"]}
 simd-json = { version = "0.13.4", features = ["runtime-detection", "known-key"], optional = true }
 log = { version = "0.4.20", optional = true }
 rust_decimal = "1.22"
+lockfree = "0.3"
 # FIXME: to be removed
 futures-util = "0.3.28"
 ordered-float = "2.6"
