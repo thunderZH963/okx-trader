@@ -5,7 +5,7 @@ use okx_rs::api::v5::GetDepositHistory;
 async fn main() {
     with_env_private_client(|client| async move {
         let response = client.request(GetDepositHistory::default()).await.unwrap();
-        println!("{}", serde_json::to_string_pretty(&response).unwrap());
+        info!("{}", serde_json::to_string_pretty(&response).unwrap());
     })
     .await;
 }

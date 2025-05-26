@@ -102,7 +102,7 @@ impl BookManager {
 
             self.last_seq = *seq_id;
             self.last_exch_ts = *ts;
-            // println!("{:?}", self.book);
+            // info!("{:?}", self.book);
             debug_assert!(!self.book.crossed(), "crossed book");
         }
         should_update

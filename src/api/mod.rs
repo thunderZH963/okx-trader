@@ -144,7 +144,7 @@ impl Rest {
 
         let body = sent.bytes().await?;
 
-        // println!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
+        // info!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
 
         match serde_json::from_slice::<ApiResponse<R::Response>>(&body) {
             Ok(ApiResponse { code, msg, data }) => match code {

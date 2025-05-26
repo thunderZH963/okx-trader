@@ -8,10 +8,10 @@ use okx_rs::websocket::WebsocketChannel;
 fn main() {
     let (mut client, response) =
         tungstenite::connect("wss://ws.okx.com:8443/ws/v5/public").unwrap();
-    println!("Connected to the server");
-    println!("Response HTTP code: {}", response.status());
-    println!("Response contains the following headers:");
-    println!("{:?}", response.headers());
+    info!("Connected to the server");
+    info!("Response HTTP code: {}", response.status());
+    info!("Response contains the following headers:");
+    info!("{:?}", response.headers());
 
     client
         .send(Instruments(Futures).subscribe_message().into())
@@ -29,9 +29,9 @@ fn main() {
         match Instruments::try_parse(&msg) {
             Ok(Some(resp)) => match resp.data {
                 Some(instruments) => {
-                    println!("instruments: {:?}", instruments);
+                    info!("instruments: {:?}", instruments);
                 }
-                None => println!("other response: {:?}", resp),
+                None => info!("other response: {:?}", resp),
             },
             Err(err) => panic!("Error parsing response: {:?}", err),
             _ => {}

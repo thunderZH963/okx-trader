@@ -6,11 +6,13 @@ mod models;
 mod globals;
 mod msg_engine;
 mod compute_engine;
+use log4rs::init_file;
 use utils::{generate_nanoid, spot_generate_client_order_id, futures_generate_client_order_id};
 use models::OperationType;
 use globals::*;
 use msg_engine::*;
 use compute_engine::*;
+use log::*;
 
 
 /*
@@ -50,7 +52,8 @@ async fn main() {
     /*
      * Some Necessary Initialization
      */
-    env_logger::init();
+    init_file("log4rs.yml", Default::default()).unwrap();
+    // env_logger::init();
     dotenv::dotenv().ok();
     let key = std::env::var("OKX_API_KEY").unwrap();
     let secret = std::env::var("OKX_API_SECRET").unwrap();
@@ -92,7 +95,7 @@ async fn main() {
     let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
     write_private.send(auth_msg_private.into()).await.unwrap();    
     let auth_resp_private = read_private.next().await.unwrap();
-    println!("A private websocket channel auth: {:?}", auth_resp_private);
+    info!("A private websocket channel auth: {:?}", auth_resp_private);
     let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
     let account_channel_handle = tokio::spawn(async move {
         loop {
@@ -107,7 +110,7 @@ async fn main() {
             let channel: String = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
             let data = &parsed_msg["data"];
             if data.is_null() {
-                println!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", msg);
+                info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", msg);
             } else {
                 if channel == "balance_and_position" {
                     process_account_message(data).await;
@@ -132,7 +135,7 @@ async fn main() {
     let auth_msg_order = OKXAuth::ws_auth(options_order).unwrap();
     write_order.send(auth_msg_order.into()).await.unwrap();    
     let auth_resp_order = read_order.next().await.unwrap();
-    println!("A private order websocket channel auth: {:?}", auth_resp_order);
+    info!("A private order websocket channel auth: {:?}", auth_resp_order);
 
     /*
      * A private websocket channel initialization for orders info
@@ -147,7 +150,7 @@ async fn main() {
     let auth_msg_order_info = OKXAuth::ws_auth(options_order_info).unwrap();
     write_order_info.send(auth_msg_order_info.into()).await.unwrap();    
     let auth_resp_order_info = read_order_info.next().await.unwrap();
-    println!("A private order_info websocket channel auth: {:?}", auth_resp_order_info);
+    info!("A private order_info websocket channel auth: {:?}", auth_resp_order_info);
     for inst_id in spot_inst_ids.clone() { 
         let orders_info = OrdersInfoChannel {
             inst_id: String::from(inst_id),
@@ -172,7 +175,7 @@ async fn main() {
                 }
                 _ => continue,
             };
-            println!("!!!!!!!!!!!!!!!Orders Update {}", msg);
+            info!("!!!!!!!!!!!!!!!Orders Update {}", msg);
         }
     });
 
@@ -189,7 +192,7 @@ async fn main() {
     let auth_msg = OKXAuth::ws_auth(options).unwrap();
     write.send(auth_msg.into()).await.unwrap();    
     let auth_resp = read.next().await.unwrap();
-    println!("A public websocket channel auth: {:?}", auth_resp);
+    info!("A public websocket channel auth: {:?}", auth_resp);
     for inst_id in spot_inst_ids.clone() { // 遍历SPOT_inst_ids，创建Books并发送订阅消息，同时订阅books5（depth is 5）和bookstbt（just best）的数据
         let books = Books5 {
             inst_id: String::from(inst_id),
@@ -275,7 +278,7 @@ async fn main() {
                 inst2ctval.insert(inst_id.to_string(), ct_val);
             }
         }
-        println!("Rest API for GET instruments full data: lotsz is {:?}, minsz is {:?} and ctval is {:?}", inst2lotsz, inst2minsz, inst2ctval);
+        info!("Rest API for GET instruments full data: lotsz is {:?}, minsz is {:?} and ctval is {:?}", inst2lotsz, inst2minsz, inst2ctval);
     }
     
     /*
@@ -297,18 +300,18 @@ async fn main() {
             let inst_id = parsed_msg["arg"]["instId"].as_str().unwrap_or("Unknown").to_string();
             let data = &parsed_msg["data"][0];
             if data.is_null() {
-                println!("***************Books/Instruments handler reveives first msg with non-data {:?}", msg);
+                info!("***************Books/Instruments handler reveives first msg with non-data {:?}", msg);
             } else {
                 if channel == "instruments" {
                     let inst_type = parsed_msg["arg"]["instType"].as_str().unwrap_or("Unknown").to_string();
-                    println!("***************Instruments handler handles update msg: inst_type {:?}", inst_type);
+                    info!("***************Instruments handler handles update msg: inst_type {:?}", inst_type);
                     process_instruments_message(&parsed_msg["data"]).await;
                 } else if channel == "books5" {
-                    println!("***************Books handler handles BOOKS5 update msg: inst_id {:?}", inst_id);
+                    info!("***************Books handler handles BOOKS5 update msg: inst_id {:?}", inst_id);
                     process_books5_message(inst_id.clone(), data).await;
                     tx_books.send(inst_id.clone()).await.unwrap();
                 } else if channel == "bbo-tbt" {
-                    println!("***************Books handler handles BBO-TBT update msg: inst_id {:?}", inst_id);
+                    info!("***************Books handler handles BBO-TBT update msg: inst_id {:?}", inst_id);
                     process_bbotbt_message(inst_id.clone(), data).await;
                     tx_books.send(inst_id.clone()).await.unwrap();
                 } else {
@@ -341,11 +344,11 @@ async fn main() {
                 swap_inst_id = format!("{}-SWAP", msg);
                 spot_inst_id = msg.clone();
             }
-            println!("###############Message Receiving Processor: computing engine begins to process swap/spot: {:?} {:?}", swap_inst_id, spot_inst_id);
+            info!("###############Message Receiving Processor: computing engine begins to process swap/spot: {:?} {:?}", swap_inst_id, spot_inst_id);
             
             let inst_state_map = INST_STATE_MAP.read().await;
             if inst_state_map.contains_key(&spot_inst_id) || inst_state_map.contains_key(&swap_inst_id) {
-                println!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
+                info!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
                 continue;
             }
         
@@ -366,7 +369,7 @@ async fn main() {
                 threshold_2_caution = signal.unwrap().threshold_2_caution;
                 threshold_2_number = signal.unwrap().threshold_2_number;
             }
-            println!("###############Trade Signal Acquirer: trade signal is threshold_2_open={:?}, threshold_2_close={:?}, threshold_2_caution={:?}, threshold_2_number={:?}", threshold_2_open, threshold_2_close, threshold_2_caution, threshold_2_number);
+            info!("###############Trade Signal Acquirer: trade signal is threshold_2_open={:?}, threshold_2_close={:?}, threshold_2_caution={:?}, threshold_2_number={:?}", threshold_2_open, threshold_2_close, threshold_2_caution, threshold_2_number);
 
             /*
              * Order Book Calculator
@@ -374,10 +377,10 @@ async fn main() {
              */
             let orderbook_depth =  calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), true, threshold_2_open, threshold_2_close).await;
             let orderbook = calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), false, threshold_2_open, threshold_2_close).await;
-            println!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
+            info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
 
             if orderbook_depth.operation_type == OperationType::NoOP || orderbook.operation_type == OperationType::NoOP { // skip noop signal
-                println!("###############Order Book Calculator: skipping because of NOOP");
+                info!("###############Order Book Calculator: skipping because of NOOP");
                 continue;
             }
 
@@ -402,7 +405,7 @@ async fn main() {
                     
                     spot_lot_size = inst2lotsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
                     swap_lot_size = inst2lotsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
-                    // println!("debug, {:?} {:?}", inst2lotsz, spot_lot_size);
+                    // info!("debug, {:?} {:?}", inst2lotsz, spot_lot_size);
                     spot_min_size = inst2minsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
                     swap_min_size = inst2minsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
                     lot_size = spot_lot_size.max(swap_lot_size);
@@ -412,7 +415,7 @@ async fn main() {
                     let ccy2bal = CCY2BAL.lock().await;
                     balance_usdt = ccy2bal.get("USDT").unwrap_or(&Decimal::zero()).clone();
                     position_spot = ccy2bal.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
-                    // println!("debug {:?} {:?}", spot_inst_id, ccy2bal);
+                    // info!("debug {:?} {:?}", spot_inst_id, ccy2bal);
                 }
                 let is_open = orderbook.operation_type == OperationType::Open2;
                 let is_close = !is_open;
@@ -423,7 +426,7 @@ async fn main() {
                     }
                 };
                 
-                println!("###############Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
+                info!("###############Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
                                                                 spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_spot, constraint_percent_qty);
                 
                 /*
@@ -478,7 +481,7 @@ async fn main() {
                 } else {
                     swap_best_ask
                 };
-                println!("###############Basic Order Qty Calculator: trade_qty={:?}, unit_price_spot={:?} and unit_price_swap={:?}", trade_qty, unit_price_spot, unit_price_swap);
+                info!("###############Basic Order Qty Calculator: trade_qty={:?}, unit_price_spot={:?} and unit_price_swap={:?}", trade_qty, unit_price_spot, unit_price_swap);
 
                 if is_open {
                     let spot_delta;
@@ -516,7 +519,7 @@ async fn main() {
                         let unit_price_max = f64::max(unit_price_spot, unit_price_swap);
                         trade_qty = constraint_value / unit_price_max;
                     }
-                    println!("###############Basic Order Qty Adjusting for OPEN2: spot_delta={:?}, open_qty_max={:?}, trade_value={:?}, constraint_value={:?} and trade_qty={:?}", spot_delta, open_qty_max, trade_value, constraint_value, trade_qty);
+                    info!("###############Basic Order Qty Adjusting for OPEN2: spot_delta={:?}, open_qty_max={:?}, trade_value={:?}, constraint_value={:?} and trade_qty={:?}", spot_delta, open_qty_max, trade_value, constraint_value, trade_qty);
                 }
 
                 let mut trade_qty_decimal = Decimal::from_f64(trade_qty).unwrap();
@@ -536,7 +539,7 @@ async fn main() {
                     if trade_qty_decimal < spot_min_size { //skip when spot_min_sz is not saisfied
                         continue;
                     }
-                    println!("###############Basic Order Qty Adjusting for CLOSE2: trade_qty_decimal={:?}", trade_qty_decimal); 
+                    info!("###############Basic Order Qty Adjusting for CLOSE2: trade_qty_decimal={:?}", trade_qty_decimal); 
                 }
 
                 
@@ -553,7 +556,7 @@ async fn main() {
                     continue;
                 }
 
-                println!(
+                info!(
                     "###############Final Order Calculator: inst_id={:?}, trade_qty={:?}, All checking passes!",
                     spot_inst_id, trade_qty_decimal
                 );
@@ -620,11 +623,11 @@ async fn main() {
             {
                 let inst_state_map = INST_STATE_MAP.read().await;
                 if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) ||  inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())){
-                    println!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
+                    info!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
                     continue;
                 }
             }
-            println!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
+            info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
             {
                 let mut inst_state_map = INST_STATE_MAP.write().await;
                 inst_state_map.insert(order_spot.clone().inst_id.to_string(), order_spot.clone().id);
@@ -632,7 +635,7 @@ async fn main() {
                 let mut orderid2inst = ORDERID2INST.write().await;
                 orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
                 orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
-                println!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
+                info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
             }
             let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
             let _ = write_order.send(order_swap.clone().subscribe_message().into()).await;
@@ -648,7 +651,7 @@ async fn main() {
                 }
                 _ => continue,
             };
-            println!("$$$$$$$$$$$$$$$Order Recv msg {}", msg);
+            info!("$$$$$$$$$$$$$$$Order Recv msg {}", msg);
             let parsed_msg: Value = serde_json::from_str(&msg).expect("Failed to parse JSON");
             let id = parsed_msg["id"].as_str().unwrap_or("Unknown").to_string();
             {
@@ -659,7 +662,7 @@ async fn main() {
                 };
                 let mut inst_state_map = INST_STATE_MAP.write().await;
                 inst_state_map.remove(&inst_id);
-                println!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
+                info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
             }
         }
     });

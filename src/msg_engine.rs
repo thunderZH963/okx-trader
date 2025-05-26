@@ -2,6 +2,7 @@ use serde_json::{Value};
 use crate::globals::*;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
+use log::*;
 
 pub async fn process_instruments_message(data: &Value) {
     let mut inst2lotsz = INST2LOTSZ.lock().await;
@@ -15,7 +16,7 @@ pub async fn process_instruments_message(data: &Value) {
         inst2lotsz.insert(inst_id.clone(), Decimal::from_str(&lotSz).unwrap_or(Decimal::ZERO));
         inst2minsz.insert(inst_id.clone(), Decimal::from_str(&minSz).unwrap_or(Decimal::ZERO));
         inst2ctval.insert(inst_id.clone(), Decimal::from_str(&ct_val).unwrap_or(Decimal::ZERO));
-        println!("Instruments handler handles update msg: inst_id {:?}, lotsz {:?}, minsz {:?} and ctval {:?}", inst_id, lotSz, minSz, ct_val);
+        info!("Instruments handler handles update msg: inst_id {:?}, lotsz {:?}, minsz {:?} and ctval {:?}", inst_id, lotSz, minSz, ct_val);
     }
 }
 
@@ -25,10 +26,10 @@ pub async fn process_account_message(data: &Value) {
         match Decimal::from_str(json_item["cashBal"].as_str().unwrap()) {
             Ok(decimal_value) => {
                 ccy2bal.insert(json_item["ccy"].as_str().unwrap().to_string(), decimal_value);
-                println!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", json_item["ccy"].to_string(), decimal_value);
+                info!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", json_item["ccy"].to_string(), decimal_value);
             }
             Err(e) => {
-                println!("Account Message Updater: Error converting cashBal to Decimal: {}", e);
+                info!("Account Message Updater: Error converting cashBal to Decimal: {}", e);
             }
         }
     }
@@ -36,10 +37,10 @@ pub async fn process_account_message(data: &Value) {
         match Decimal::from_str(json_item["pos"].as_str().unwrap()) {
             Ok(decimal_value) => {
                 ccy2bal.insert(json_item["instId"].as_str().unwrap().to_string(), decimal_value);
-                println!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", json_item["instId"].to_string(), decimal_value);
+                info!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", json_item["instId"].to_string(), decimal_value);
             }
             Err(e) => {
-                println!("Account Message Updater: Error converting cashBal to Decimal: {}", e);
+                info!("Account Message Updater: Error converting cashBal to Decimal: {}", e);
             }
         }
     }
@@ -81,7 +82,7 @@ pub async fn process_books5_message(inst_id: String, data: &Value) {
 
     let mut inst2bestask = INST2BESTASK_DEPTH.lock().await;
     inst2bestask.insert(inst_id.clone(), res_ask.clone().get(0).unwrap().clone());
-    println!("BOOKS5 update inst_id {:?},  inst2bestbid{:?} and inst2bestask", inst2bestbid, inst2bestask);
+    info!("BOOKS5 update inst_id {:?},  inst2bestbid{:?} and inst2bestask", inst2bestbid, inst2bestask);
 }
 
 pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
@@ -113,7 +114,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             inst2bestbid.insert(inst_id.clone(), vec![price, nums, orders]); // 插入新的 Vec<Decimal>
         }
     }
-    println!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);
+    info!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);
 
 }
 

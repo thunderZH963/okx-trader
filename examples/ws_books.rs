@@ -6,10 +6,10 @@ use okx_rs::websocket::WebsocketChannel;
 
 fn main() {
     let (mut client, response) = tungstenite::connect(Production.public_websocket()).unwrap();
-    println!("Connected to the server");
-    println!("Response HTTP code: {}", response.status());
-    println!("Response contains the following headers:");
-    println!("{:?}", response.headers());
+    info!("Connected to the server");
+    info!("Response HTTP code: {}", response.status());
+    info!("Response contains the following headers:");
+    info!("{:?}", response.headers());
 
     let symbols = vec!["BTC-USDT-SWAP", "BTC-USDT", "ETH-USDT-SWAP", "ETH-USDT"];
 
@@ -27,13 +27,13 @@ fn main() {
         match Books5::try_parse(&data) {
             Ok(Some(resp)) => match resp.data {
                 Some([book_update, ..]) => {
-                    println!("book_update: {:?}", book_update);
+                    info!("book_update: {:?}", book_update);
                 }
-                None => println!("other response: {:?}", resp),
+                None => info!("other response: {:?}", resp),
             },
             Ok(None) => continue,
             Err(err) => {
-                println!("Error parsing response: {:?}", err);
+                info!("Error parsing response: {:?}", err);
             }
         }
     }

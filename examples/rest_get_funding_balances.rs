@@ -10,7 +10,7 @@ async fn main() {
             })
             .await
             .unwrap();
-        println!("{}", serde_json::to_string_pretty(&response).unwrap());
+        info!("{}", serde_json::to_string_pretty(&response).unwrap());
     })
     .await;
 }
