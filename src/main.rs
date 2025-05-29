@@ -8,7 +8,7 @@ mod msg_engine;
 mod compute_engine;
 mod redis_subscribe;
 use utils::{generate_nanoid, spot_generate_client_order_id, futures_generate_client_order_id};
-use models::{OperationType, TradeSignal};
+use models::{OperationType};
 use globals::*;
 use msg_engine::*;
 use compute_engine::*;
@@ -41,9 +41,9 @@ use log4rs::init_file;
 use log::*;
 
 /*
- * Define for Production or DemoTrading 
+ * Define for Production(0) or DemoTrading(1) 
  */
-static TEST: i32 = 0; //TODO: 0 is not okay?
+static TEST: i32 = 0; //TODO: 1 is not okay?
 
 
 #[tokio::main]
@@ -61,8 +61,8 @@ async fn main() {
     /*
      * Some Necessary Values Initialization
      */
-    let spot_inst_ids = vec!["KAITO-USDT",]; //现货类型
-    let swap_inst_ids = vec!["KAITO-USDT-SWAP", ]; //合约类型
+    let spot_inst_ids = vec!["KAITO-USDT",]; //现货类型 //TODO: Maintain it for new symbols
+    let swap_inst_ids = vec!["KAITO-USDT-SWAP", ]; //合约类型 //TODO: Maintain it for new symbols
     init_ccy2bal(spot_inst_ids.clone()).await;
     init_ccy2bal(swap_inst_ids.clone()).await;
     {
@@ -93,7 +93,7 @@ async fn main() {
     let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
     write_private.send(auth_msg_private.into()).await.unwrap();
     let auth_resp_private = read_private.next().await.unwrap();
-    println!("A private websocket channel auth: {:?}", auth_resp_private);
+    info!("A private websocket channel auth: {:?}", auth_resp_private);
     let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
     let account_channel_handle = tokio::spawn(async move {
         loop {
@@ -106,7 +106,7 @@ async fn main() {
                         panic!("BalanceAndPositionChannel expected a text message, {}", msg)
                     };
                     if json_str == "pong" {
-                        println!("BalanceAndPositionChannel received a pong message");
+                        println!("BalanceAndPositionChannel received a pong message, Alive!");
                         continue;
                     }
                     serde_json::from_str(&json_str).expect("Failed to parse JSON")
@@ -183,7 +183,7 @@ async fn main() {
                         panic!("OrdersInfoChannel expected a text message")
                     };
                     if json_str == "pong" {
-                        println!("OrdersInfoChannel received a pong message");
+                        println!("OrdersInfoChannel received a pong message, Alive!");
                         continue;
                     }
                     serde_json::from_str(&json_str).expect("Failed to parse JSON")
@@ -308,7 +308,6 @@ async fn main() {
             let msg = read.next().await.unwrap();
             let parsed_msg: Value = match msg {
                 Ok(msg) => {
-
                     let json_str = if let Message::Text(txt) = msg {
                         txt
                     } else {
@@ -383,6 +382,8 @@ async fn main() {
             let mut threshold_2_close = None;
             let mut threshold_2_caution = None;
             let mut threshold_2_number = None;
+            let mut allow_open = true; //TODO: process None in TRADE_SIGNALS
+            let mut allow_open = true; //TODO: process None in TRADE_SIGNALS
             {
                 let trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
                 if !trade_signals.contains_key(&spot_inst_id) {
@@ -574,6 +575,7 @@ async fn main() {
                 if trade_qty_decimal.to_f64().unwrap() <= 0.0 { // Check if quantity is valid
                     continue;
                 }
+                trade_qty_decimal = trade_qty_decimal * (*SPOT_TRADE_RATIO);
                 trade_qty_decimal = (trade_qty_decimal / lot_size).floor() * lot_size;
                 // trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
                 if trade_qty_decimal < spot_min_size // Lot size constraint
@@ -595,6 +597,10 @@ async fn main() {
                     {
                         let mut local_deltas_spot = LOCAL_DELTAS_SPOT.lock().await; //update local spot
                         local_deltas_spot.insert(spot_inst_id.clone(), trade_qty_decimal.to_f64().unwrap());
+                        info!(
+                            "###############Update Local Delta: {:?}",
+                            local_deltas_spot
+                        );
                     }
                     let order_spot = Order {
                         id: spot_generate_client_order_id(&OperationType::Open2, &nanoid),
@@ -679,12 +685,12 @@ async fn main() {
                 },
                 Ok(None) => {
                     // This means `rx_order.recv()` returned `None`, i.e., the receiver has been closed.
-                    println!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
+                    error!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
                     break;
                 },
                 Err(_) => {
                     // Timeout happened after 20 seconds
-                    println!("$$$$$$$$$$$$$$ No order received for 20 seconds, sending ping message.");
+                    info!("$$$$$$$$$$$$$$Order Engine: No order received for 20 seconds, sending ping message.");
                     let _ = write_order.send("ping".into()).await;
                 },
             }
@@ -701,7 +707,7 @@ async fn main() {
                         Message::Text(text) => {
                             info!("$$$$$$$$$$$$$$$Order Recv msg {:?}", text);
                             if text == "pong" {
-                                println!("Order Recv Channel received a pong message");
+                                println!("Order Recv Channel received a pong message, Alive!");
                                 continue;
                             }
                             let parsed_msg: Value = serde_json::from_str(&text).expect("Failed to parse JSON");
@@ -714,7 +720,7 @@ async fn main() {
                                     None => String::new(),
                                 };
                                 let mut inst_state_map = INST_STATE_MAP.write().await;
-                                inst_state_map.remove(&inst_id);
+                                // inst_state_map.remove(&inst_id);
                                 info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
                             }
                         }
@@ -727,11 +733,11 @@ async fn main() {
                     error!("WebSocket error: {:?}", e);
                 }
                 Ok(None) => {
-                    println!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
+                    error!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
                     break;
                 }
                 Err(_) => {
-                    println!("$$$$$$$$$$$$$$ No order received for 20 seconds.");
+                    info!("$$$$$$$$$$$$$$ Order Recv Channel: No order received for 20 seconds.");
                 }
             }  
         }

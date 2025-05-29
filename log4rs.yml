@@ -54,7 +54,7 @@ loggers:
   #appenders:
   #  - requests
   #additive: false
-  binance_arb_trader::statistics:
+  okx_trader::statistics:
     level: info
     appenders:
       - transaction

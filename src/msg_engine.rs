@@ -105,7 +105,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
 
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {
-            inst2bestask.insert(inst_id.clone(), vec![price, nums, orders]); // 插入新的 Vec<Decimal>
+            inst2bestask.insert(inst_id.clone(), vec![price, nums, orders]);
         }
     }
 
@@ -118,7 +118,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
 
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {
-            inst2bestbid.insert(inst_id.clone(), vec![price, nums, orders]); // 插入新的 Vec<Decimal>
+            inst2bestbid.insert(inst_id.clone(), vec![price, nums, orders]);
         }
     }
     info!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);

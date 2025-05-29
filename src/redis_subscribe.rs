@@ -46,6 +46,7 @@ pub async fn redis_subscribe() {
                         
                                 {
                                     let mut trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
+                                    trade_signals.clear();
                                     for (key, value) in updated_signals {
                                         trade_signals.insert(key, value);
                                     }

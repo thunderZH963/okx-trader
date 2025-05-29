@@ -105,6 +105,7 @@ lazy_static! {
 lazy_static! {
     pub static ref MAX_OPEN_VALUE: f64 = 400.0; //最大开仓价格
     pub static ref  MAX_CLOSE_VALUE: f64 = 1000.0; //最大关仓价格
+    pub static ref  SPOT_TRADE_RATIO: Decimal = Decimal::new(100015, 5);
 }
 
 lazy_static! {
