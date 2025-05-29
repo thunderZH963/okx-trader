@@ -6,8 +6,10 @@ use tokio::sync::RwLock;
 
 use lazy_static::lazy_static;
 
+
+
 lazy_static::lazy_static! {
-    pub static ref GLOBAL_TRADE_SIGNALS: tokio::sync::Mutex<HashMap<String, TradeSignal>> = {
+    pub static ref GLOBAL_TRADE_SIGNALS:tokio::sync::Mutex<HashMap<String, TradeSignal>> = {
         let mut map = HashMap::new();
         tokio::sync::Mutex::new(map)
     };
@@ -96,6 +98,37 @@ lazy_static::lazy_static! {
     pub static ref ORDERID2INST: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
+lazy_static! {
+    pub static ref PING_TIMEOUT: u64 = 20;
+}
+
+lazy_static! {
+    pub static ref MAX_OPEN_VALUE: f64 = 400.0; //最大开仓价格
+    pub static ref  MAX_CLOSE_VALUE: f64 = 1000.0; //最大关仓价格
+}
+
+lazy_static! {
+    // 连接 Redis 服务器
+    pub static ref redis_url: String = std::env::var("REDIS_URL").unwrap().to_string();
+    pub static ref redis_password: String = std::env::var("REDIS_PASSWD").unwrap().to_string();
+    pub static ref redis_channel: String  = std::env::var("REDIS_CHANNEL").unwrap().to_string();
+    pub static ref redis_port: i32 = 6379;
+    pub static ref redis_db: i32 = 1;
+   
+
+    pub static ref STRATEGY_REDIS_CLIENT: redis::Client = redis::Client::open(format!(
+        "redis://:{}@{}:{}/{}", 
+        *redis_password, 
+        *redis_url, 
+        *redis_port, 
+        *redis_db
+    ))
+    .unwrap();
+}
+
+pub type _ThresArray = [Option<f64>; 3];
+
+// TODO: Just for developing, drop it later
 pub async fn init_trade_signals() {
     let mut trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
     trade_signals.insert("BTC-USDT".to_string(), TradeSignal {

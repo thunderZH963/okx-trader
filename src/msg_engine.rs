@@ -46,6 +46,13 @@ pub async fn process_account_message(data: &Value) {
     }
 }
 
+/*
+ * FIX: asks和bids值数组举例说明： ["411.8", "10", "0", "4"]
+    - 411.8为深度价格
+    - 10为此价格的数量 （合约交易为张数，现货/币币杠杆为交易币的数量
+    - 0该字段已弃用(始终为0)
+    - 4为此价格的订单数量
+ */
 pub async fn process_books5_message(inst_id: String, data: &Value) {
     let mut res_ask: Vec<Vec<Decimal>> = Vec::new();
     for ask in data["asks"].as_array().unwrap_or(&vec![]) {
@@ -53,7 +60,7 @@ pub async fn process_books5_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
         let nums = ask.get(1).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
-        let orders = ask.get(2).and_then(Value::as_str)
+        let orders = ask.get(3).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {
             res_ask.push(vec![price, nums, orders]);
@@ -67,7 +74,7 @@ pub async fn process_books5_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
         let nums = ask.get(1).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
-        let orders = ask.get(2).and_then(Value::as_str)
+        let orders = ask.get(3).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
 
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {
@@ -94,7 +101,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
         let nums = ask.get(1).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
-        let orders = ask.get(2).and_then(Value::as_str)
+        let orders = ask.get(3).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
 
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {
@@ -107,7 +114,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             .and_then(|s| Decimal::from_str(s).ok());
         let nums = ask.get(1).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
-        let orders = ask.get(2).and_then(Value::as_str)
+        let orders = ask.get(3).and_then(Value::as_str)
             .and_then(|s| Decimal::from_str(s).ok());
 
         if let (Some(price), Some(nums), Some(orders)) = (price, nums, orders) {

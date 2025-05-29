@@ -6,15 +6,13 @@ mod models;
 mod globals;
 mod msg_engine;
 mod compute_engine;
-use log4rs::init_file;
+mod redis_subscribe;
 use utils::{generate_nanoid, spot_generate_client_order_id, futures_generate_client_order_id};
-use models::OperationType;
+use models::{OperationType, TradeSignal};
 use globals::*;
 use msg_engine::*;
 use compute_engine::*;
-use log::*;
-
-
+use redis_subscribe::redis_subscribe;
 /*
  * importing okx rust API
  */
@@ -33,28 +31,29 @@ use okx_rs::websocket::conn::{Books5, BboTbt, Instruments, Order};
  */
 use dotenv; //env loader
 use futures_util::{SinkExt, StreamExt};
-use std::collections::{HashMap, BTreeMap};
 use serde_json::{Value};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use tokio::sync::mpsc;
+use tokio::time::{sleep, timeout, Duration};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
+use log4rs::init_file;
+use log::*;
 
 /*
- * Define for Production or DemoTrading
+ * Define for Production or DemoTrading 
  */
-static TEST: i32 = 0;
+static TEST: i32 = 0; //TODO: 0 is not okay?
 
 
 #[tokio::main]
 async fn main() {
-
     /*
      * Some Necessary Initialization
      */
-    init_file("log4rs.yml", Default::default()).unwrap();
-    // env_logger::init();
     dotenv::dotenv().ok();
+    init_file("log4rs.yml", Default::default()).unwrap(); // for Production
+    // env_logger::init(); // for debug by develpers
     let key = std::env::var("OKX_API_KEY").unwrap();
     let secret = std::env::var("OKX_API_SECRET").unwrap();
     let passphrase = std::env::var("OKX_API_PASSPHRASE").unwrap();
@@ -62,12 +61,12 @@ async fn main() {
     /*
      * Some Necessary Values Initialization
      */
-    let spot_inst_ids = vec!["ADA-USDT",]; //现货类型
-    let swap_inst_ids = vec!["ADA-USDT-SWAP", ]; //合约类型
+    let spot_inst_ids = vec!["KAITO-USDT",]; //现货类型
+    let swap_inst_ids = vec!["KAITO-USDT-SWAP", ]; //合约类型
     init_ccy2bal(spot_inst_ids.clone()).await;
     init_ccy2bal(swap_inst_ids.clone()).await;
     {
-        let mut local_deltas_spot = LOCAL_DELTAS_SPOT.lock().await; //TODO: 记录更新交易的spot的开仓量的变量(两次策略更新之间), update its logic
+        let mut local_deltas_spot = LOCAL_DELTAS_SPOT.lock().await; //FIX: 记录更新交易的spot的开仓量的变量(两次策略更新之间), update its logic
         for id in spot_inst_ids.clone() {
             local_deltas_spot.insert(id.to_string(), 0.0);
         }
@@ -79,7 +78,10 @@ async fn main() {
     /*
      * Loading trade signals
      */
-    init_trade_signals().await; // TODO: It will be replaced by subscribing redis later
+    // init_trade_signals().await; // TODO: It will be replaced by subscribing redis later
+    let redis_handle = tokio::spawn(async move {
+        redis_subscribe().await;
+    });
 
 
     /*
@@ -87,42 +89,46 @@ async fn main() {
      */
     let mut options_private = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
     let (mut client_private, mut response_private) = connect_async(Production.private_websocket()).await.unwrap();
-    if TEST == 1 {
-        options_private = Options::new_with(DemoTrading, key.clone(), secret.clone(), passphrase.clone());
-        (client_private, response_private) = connect_async(DemoTrading.private_websocket()).await.unwrap();
-    }
     let (mut write_private, mut read_private) = client_private.split();
     let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
-    write_private.send(auth_msg_private.into()).await.unwrap();    
+    write_private.send(auth_msg_private.into()).await.unwrap();
     let auth_resp_private = read_private.next().await.unwrap();
-    info!("A private websocket channel auth: {:?}", auth_resp_private);
+    println!("A private websocket channel auth: {:?}", auth_resp_private);
     let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
     let account_channel_handle = tokio::spawn(async move {
         loop {
-            let msg = match read_private.next().await {
-                Some(Ok(Message::Text(msg))) => msg,
-                Some(Err(err)) => {
-                    panic!("{:?}", err);
+            let msg = read_private.next().await.unwrap();
+            let parsed_msg: Value = match msg {
+                Ok(msg) => {
+                    let json_str = if let Message::Text(txt) = msg {
+                        txt
+                    } else {
+                        panic!("BalanceAndPositionChannel expected a text message, {}", msg)
+                    };
+                    if json_str == "pong" {
+                        println!("BalanceAndPositionChannel received a pong message");
+                        continue;
+                    }
+                    serde_json::from_str(&json_str).expect("Failed to parse JSON")
                 }
-                _ => continue,
+                Err(_) => panic!("Error receiving message"),
             };
-            let parsed_msg: Value = serde_json::from_str(&msg).expect("Failed to parse JSON");
             let channel: String = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
             let data = &parsed_msg["data"];
             if data.is_null() {
-                info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", msg);
+                info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", parsed_msg);
             } else {
                 if channel == "balance_and_position" {
                     process_account_message(data).await;
                 } else {
-                    panic!("Receiving unknown channel msg from private websocket balance_and_position channel {:?}", msg);
+                    panic!("Receiving unknown channel msg from private websocket balance_and_position channel {:?}", parsed_msg);
                 }
             }
         }
     });
 
-
-     /*
+    /*
+     * 下单WebSocket
      * A private websocket channel initialization for order
      */
     let mut options_order = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
@@ -138,6 +144,7 @@ async fn main() {
     info!("A private order websocket channel auth: {:?}", auth_resp_order);
 
     /*
+     * 查询订单信息WebSocket
      * A private websocket channel initialization for orders info
      */
     let mut options_order_info = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
@@ -156,7 +163,6 @@ async fn main() {
             inst_id: String::from(inst_id),
             inst_type: InstrumentType::Spot,
         };
-        
         let _ = write_order_info.send(orders_info.subscribe_message().into()).await;
     }
     for inst_id in swap_inst_ids.clone() {
@@ -168,18 +174,28 @@ async fn main() {
     }
     let orders_info_channel_handle = tokio::spawn(async move {
         loop {
-            let msg = match read_order_info.next().await {
-                Some(Ok(Message::Text(msg))) => msg,
-                Some(Err(err)) => {
-                    panic!("{:?}", err);
+            let msg = read_order_info.next().await.unwrap();
+            let parsed_msg: Value = match msg {
+                Ok(msg) => {
+                    let json_str = if let Message::Text(txt) = msg {
+                        txt
+                    } else {
+                        panic!("OrdersInfoChannel expected a text message")
+                    };
+                    if json_str == "pong" {
+                        println!("OrdersInfoChannel received a pong message");
+                        continue;
+                    }
+                    serde_json::from_str(&json_str).expect("Failed to parse JSON")
                 }
-                _ => continue,
+                Err(_) => panic!("Error receiving message {:?}", msg),
             };
-            info!("!!!!!!!!!!!!!!!Orders Update {}", msg);
+            info!("!!!!!!!!!!!!!!!Orders Update {}", parsed_msg);
         }
     });
 
      /*
+     * 盘口数据查询WebSocket
      * A public websocket channel initialization for books asks/bids and instruments incrementing
      */
     let mut options = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
@@ -224,6 +240,7 @@ async fn main() {
 
 
     /*
+     * 查询instruments信息Rest
      * Rest API for GET instruments full data
      */
     let mut client_rest = Rest::new(Options::new(Production)); // 先用redis获取instruments数据的全量
@@ -286,21 +303,30 @@ async fn main() {
      * Handling depth/best ask/bids data and instruments updating
      */
     let books_channel_handle = tokio::spawn(async move {
-        for n in 1..15 { // TODO: modify to loop later
-        //loop {
-            let msg = match read.next().await {
-                Some(Ok(Message::Text(msg))) => msg,
-                Some(Err(err)) => {
-                    panic!("{:?}", err);
+        // for n in 1..15 { // TODO: modify to loop later
+        loop {
+            let msg = read.next().await.unwrap();
+            let parsed_msg: Value = match msg {
+                Ok(msg) => {
+
+                    let json_str = if let Message::Text(txt) = msg {
+                        txt
+                    } else {
+                        panic!("Expected a text message")
+                    };
+                    if json_str == "pong" {
+                        continue;
+                    }
+                    
+                    serde_json::from_str(&json_str).expect("Failed to parse JSON")
                 }
-                _ => continue,
+                Err(_) => panic!("Error receiving message"),
             };
-            let parsed_msg: Value = serde_json::from_str(&msg).expect("Failed to parse JSON");
             let channel = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
             let inst_id = parsed_msg["arg"]["instId"].as_str().unwrap_or("Unknown").to_string();
             let data = &parsed_msg["data"][0];
             if data.is_null() {
-                info!("***************Books/Instruments handler reveives first msg with non-data {:?}", msg);
+                info!("***************Books/Instruments handler reveives first msg with non-data {:?}", parsed_msg);
             } else {
                 if channel == "instruments" {
                     let inst_type = parsed_msg["arg"]["instType"].as_str().unwrap_or("Unknown").to_string();
@@ -315,21 +341,18 @@ async fn main() {
                     process_bbotbt_message(inst_id.clone(), data).await;
                     tx_books.send(inst_id.clone()).await.unwrap();
                 } else {
-                    panic!("***************Books/Instruments handler receives msg from unknown channel: {:?}", msg);
+                    panic!("***************Books/Instruments handler receives msg from unknown channel: {:?}", parsed_msg);
                 }
             }
         }
     });
-    
+
     /*
      * Compute Engine
      * Receiving msgs from books/instruments thread
      * Checking and Calculating whether we can order swap/spot
      */
     let compute_handle =  tokio::spawn(async move {
-        let max_open_value = 400.0;
-        let max_close_value = 1000.0;
-
         while let Some(msg) = rx_compute.recv().await {
             /*
              * Message Receiving Processor
@@ -352,7 +375,6 @@ async fn main() {
                 continue;
             }
         
-
             /*
              * Trade Signal Acquirer
              * It contains four values serving for operation check
@@ -363,6 +385,10 @@ async fn main() {
             let mut threshold_2_number = None;
             {
                 let trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
+                if !trade_signals.contains_key(&spot_inst_id) {
+                    info!("###############Trade Signal Acquirer: No Signal coming, Skipping");
+                    continue;
+                }
                 let signal = trade_signals.get(&spot_inst_id);
                 threshold_2_open = signal.unwrap().threshold_2_open;
                 threshold_2_close = signal.unwrap().threshold_2_close;
@@ -505,7 +531,7 @@ async fn main() {
                     }
                     
                     
-                    let open2_max_volume = max_open_value;
+                    let open2_max_volume = *MAX_OPEN_VALUE;
                     if trade_qty * unit_price_spot > open2_max_volume { // Maximum open price constraint
                         trade_qty = open2_max_volume / unit_price_spot
                     }
@@ -527,10 +553,10 @@ async fn main() {
                     if position_spot.to_f64().unwrap() <= 0.0 {
                         continue;
                     }
-                    if trade_qty * unit_price_spot > max_close_value // Maximum close price constraint
+                    if trade_qty * unit_price_spot > *MAX_CLOSE_VALUE // Maximum close price constraint
                     {
                         trade_qty_decimal =
-                            Decimal::from_f64(max_close_value / unit_price_spot).unwrap();
+                            Decimal::from_f64(*MAX_CLOSE_VALUE / unit_price_spot).unwrap();
                     }
                     
                     if position_spot.to_f64().unwrap() < trade_qty_decimal.to_f64().unwrap() { // Maximum position constraint
@@ -543,13 +569,13 @@ async fn main() {
                 }
 
                 
-                trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
+                // trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
 
                 if trade_qty_decimal.to_f64().unwrap() <= 0.0 { // Check if quantity is valid
                     continue;
                 }
                 trade_qty_decimal = (trade_qty_decimal / lot_size).floor() * lot_size;
-                trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
+                // trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
                 if trade_qty_decimal < spot_min_size // Lot size constraint
                     || trade_qty_decimal < swap_min_size
                 {
@@ -616,55 +642,112 @@ async fn main() {
      * Order Engine
      * Processing order request from compute engine
      */
-    let order_handle =  tokio::spawn(async move {
-        while let Some(msg) = rx_order.recv().await {
-            let order_spot = msg.0;
-            let order_swap = msg.1;
-            {
-                let inst_state_map = INST_STATE_MAP.read().await;
-                if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) ||  inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())){
-                    info!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
-                    continue;
-                }
+    let order_handle = tokio::spawn(async move {
+        loop {
+            // Use `timeout` to wait for a message or timeout after 20 seconds
+            let msg = timeout(Duration::from_secs(*PING_TIMEOUT), rx_order.recv()).await;
+    
+            match msg {
+                Ok(Some(msg)) => {
+                    let order_spot = msg.0;
+                    let order_swap = msg.1;
+    
+                    {
+                        let inst_state_map = INST_STATE_MAP.read().await;
+                        if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) || inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())) {
+                            info!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
+                            continue;
+                        }
+                    }
+    
+                    info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
+    
+                    {
+                        let mut inst_state_map = INST_STATE_MAP.write().await;
+                        inst_state_map.insert(order_spot.clone().inst_id.to_string(), order_spot.clone().id);
+                        inst_state_map.insert(order_swap.clone().inst_id.to_string(), order_swap.clone().id);
+    
+                        let mut orderid2inst = ORDERID2INST.write().await;
+                        orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
+                        orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
+    
+                        info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
+                    }
+    
+                    let _ = write_order.send(order_spot.clone().subscribe_message().into()).await; // Send messages to `write_order`
+                    let _ = write_order.send(order_swap.clone().subscribe_message().into()).await; // Send messages to `write_order`
+                },
+                Ok(None) => {
+                    // This means `rx_order.recv()` returned `None`, i.e., the receiver has been closed.
+                    println!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
+                    break;
+                },
+                Err(_) => {
+                    // Timeout happened after 20 seconds
+                    println!("$$$$$$$$$$$$$$ No order received for 20 seconds, sending ping message.");
+                    let _ = write_order.send("ping".into()).await;
+                },
             }
-            info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
-            {
-                let mut inst_state_map = INST_STATE_MAP.write().await;
-                inst_state_map.insert(order_spot.clone().inst_id.to_string(), order_spot.clone().id);
-                inst_state_map.insert(order_swap.clone().inst_id.to_string(), order_swap.clone().id);
-                let mut orderid2inst = ORDERID2INST.write().await;
-                orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
-                orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
-                info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
-            }
-            let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
-            let _ = write_order.send(order_swap.clone().subscribe_message().into()).await;
         }
     });
+    
 
     let order_recv_handle =  tokio::spawn(async move {
         loop {
-            let msg = match read_order.next().await {
-                Some(Ok(Message::Text(msg))) => msg,
-                Some(Err(err)) => {
-                    panic!("{:?}", err);
+            let msg = timeout(Duration::from_secs(*PING_TIMEOUT), read_order.next()).await;
+            match msg {
+                Ok(Some(Ok(ws_msg))) => {
+                    match ws_msg {
+                        Message::Text(text) => {
+                            info!("$$$$$$$$$$$$$$$Order Recv msg {:?}", text);
+                            if text == "pong" {
+                                println!("Order Recv Channel received a pong message");
+                                continue;
+                            }
+                            let parsed_msg: Value = serde_json::from_str(&text).expect("Failed to parse JSON");
+                
+                            let id = parsed_msg["id"].as_str().unwrap_or("Unknown").to_string();
+                            {
+                                let orderid2inst = ORDERID2INST.read().await;
+                                let mut inst_id = match orderid2inst.get(&id) {
+                                    Some(inst) => inst.to_string(),
+                                    None => String::new(),
+                                };
+                                let mut inst_state_map = INST_STATE_MAP.write().await;
+                                inst_state_map.remove(&inst_id);
+                                info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
+                            }
+                        }
+                        other => {
+                            info!("Received non-text WebSocket message: {:?}", other);
+                        }
+                    }
                 }
-                _ => continue,
-            };
-            info!("$$$$$$$$$$$$$$$Order Recv msg {}", msg);
-            let parsed_msg: Value = serde_json::from_str(&msg).expect("Failed to parse JSON");
-            let id = parsed_msg["id"].as_str().unwrap_or("Unknown").to_string();
-            {
-                let orderid2inst = ORDERID2INST.read().await;
-                let mut inst_id = match orderid2inst.get(&id) {
-                    Some(inst) => inst.to_string(),
-                    None => String::new(),
-                };
-                let mut inst_state_map = INST_STATE_MAP.write().await;
-                inst_state_map.remove(&inst_id);
-                info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
-            }
+                Ok(Some(Err(e))) => {
+                    error!("WebSocket error: {:?}", e);
+                }
+                Ok(None) => {
+                    println!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
+                    break;
+                }
+                Err(_) => {
+                    println!("$$$$$$$$$$$$$$ No order received for 20 seconds.");
+                }
+            }  
         }
+    });
+
+    /*
+     * Timeout Control to ping each ws
+     */
+    let ping_handle = tokio::spawn(async move {
+        loop {
+            let _ = write.send("ping".into()).await;
+            let _ = write_order_info.send("ping".into()).await;
+            let _ = write_private.send("ping".into()).await;
+            sleep(Duration::from_secs(*PING_TIMEOUT)).await;
+        }
+       
     });
 
     books_channel_handle.await.unwrap();
@@ -673,5 +756,7 @@ async fn main() {
     order_handle.await.unwrap();
     order_recv_handle.await.unwrap();
     orders_info_channel_handle.await.unwrap();
+    ping_handle.await.unwrap();
+    redis_handle.await.unwrap();
 }
 
