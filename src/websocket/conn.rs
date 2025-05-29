@@ -38,6 +38,8 @@ pub struct Order {
     pub tdMode: String,
     pub ordType: String,
     pub sz: String,
+    pub tgtCcy: String,
+    pub reduceOnly: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -194,21 +196,57 @@ impl WebsocketChannel for Order {
     type ArgType<'de> = BookChannelArg<'de>;
 
     fn subscribe_message(&self) -> String {
-        let Order { id, side, inst_id, tdMode, ordType, sz } = self;
-        json!({
-            "id": id,
-            "op": Self::CHANNEL,
-            "args": [
-                {
-                    "side": side,
-                    "instId": inst_id,
-                    "tdMode": tdMode,
-                    "ordType": ordType,
-                    "sz": sz,
-                }
-            ]
-        })
-        .to_string()
+        let Order { id, side, inst_id, tdMode, ordType, sz, tgtCcy, reduceOnly} = self;
+        if tgtCcy == "1" {
+            json!({
+                "id": id,
+                "op": Self::CHANNEL,
+                "args": [
+                    {
+                        "side": side,
+                        "instId": inst_id,
+                        "tdMode": tdMode,
+                        "ordType": ordType,
+                        "sz": sz,
+                        "tgtCcy": "base_ccy",
+                    }
+                ]
+            })
+            .to_string()
+        } 
+        else if reduceOnly == "1" {
+            json!({
+                "id": id,
+                "op": Self::CHANNEL,
+                "args": [
+                    {
+                        "side": side,
+                        "instId": inst_id,
+                        "tdMode": tdMode,
+                        "ordType": ordType,
+                        "sz": sz,
+                        "reduceOnly:": "true",
+                    }
+                ]
+            })
+            .to_string()
+        }
+        else {
+            json!({
+                "id": id,
+                "op": Self::CHANNEL,
+                "args": [
+                    {
+                        "side": side,
+                        "instId": inst_id,
+                        "tdMode": tdMode,
+                        "ordType": ordType,
+                        "sz": sz,
+                    }
+                ]
+            })
+            .to_string()
+        }
     }
 
     fn unsubscribe_message(&self) -> String {

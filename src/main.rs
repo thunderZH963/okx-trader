@@ -382,8 +382,7 @@ async fn main() {
             let mut threshold_2_close = None;
             let mut threshold_2_caution = None;
             let mut threshold_2_number = None;
-            let mut allow_open = true; //TODO: process None in TRADE_SIGNALS
-            let mut allow_open = true; //TODO: process None in TRADE_SIGNALS
+            
             {
                 let trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
                 if !trade_signals.contains_key(&spot_inst_id) {
@@ -396,7 +395,12 @@ async fn main() {
                 threshold_2_caution = signal.unwrap().threshold_2_caution;
                 threshold_2_number = signal.unwrap().threshold_2_number;
             }
+            let mut allow_open = !threshold_2_open.is_none(); //TODO: process None in TRADE_SIGNALS
+            let mut allow_close = !threshold_2_close.is_none();  //TODO: process None in TRADE_SIGNALS
             info!("###############Trade Signal Acquirer: trade signal is threshold_2_open={:?}, threshold_2_close={:?}, threshold_2_caution={:?}, threshold_2_number={:?}", threshold_2_open, threshold_2_close, threshold_2_caution, threshold_2_number);
+            if !allow_open && !allow_close {
+                info!("###############Skipping this inst_id in compute_handle because none signal");
+            }
 
             /*
              * Order Book Calculator
@@ -405,11 +409,18 @@ async fn main() {
             let orderbook_depth =  calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), true, threshold_2_open, threshold_2_close).await;
             let orderbook = calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), false, threshold_2_open, threshold_2_close).await;
             info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
-
+            
+            
             if orderbook_depth.operation_type == OperationType::NoOP || orderbook.operation_type == OperationType::NoOP { // skip noop signal
                 info!("###############Order Book Calculator: skipping because of NOOP");
                 continue;
             }
+
+            if orderbook_depth.operation_type != orderbook.operation_type {
+                info!("###############Skipping this inst_id in compute_handle because not matched op type or none signal");
+                continue;
+            }
+        
 
             if orderbook_depth.operation_type == orderbook.operation_type {
                 /*
@@ -609,6 +620,8 @@ async fn main() {
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
                         sz: trade_qty_decimal.to_string(),
+                        tgtCcy: "1".to_string(),
+                        reduceOnly: "0".to_string(),
                         // sz: "1.0".to_string(),
                     };
                     let order_swap = Order {
@@ -618,6 +631,8 @@ async fn main() {
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
                         sz: (trade_qty_decimal / swap_ctval).to_string(),
+                        tgtCcy: "0".to_string(),
+                        reduceOnly: "0".to_string(),
                     };
                     tx_compute.send((order_spot, order_swap)).await.unwrap();
 
@@ -629,6 +644,8 @@ async fn main() {
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
                         sz: trade_qty_decimal.to_string(),
+                        tgtCcy: "0".to_string(),
+                        reduceOnly: "0".to_string(),
                     };
                     let order_swap = Order {
                         id: futures_generate_client_order_id(&OperationType::Close2, &nanoid),
@@ -637,6 +654,8 @@ async fn main() {
                         tdMode: "cross".to_string(),
                         ordType: "market".to_string(),
                         sz: (trade_qty_decimal / swap_ctval).to_string(),
+                        tgtCcy: "0".to_string(),
+                        reduceOnly: "1".to_string(),
                     };
                     tx_compute.send((order_spot, order_swap)).await.unwrap();
                 }

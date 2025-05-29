@@ -66,15 +66,19 @@ pub async fn calculate_basis_and_signal(spot_inst_id: String, swap_inst_id: Stri
     let basis_close2 = order_book.pp_best_ask.ln() - order_book.ps_best_bid.ln();
     
     let mut depth_operation = OperationType::NoOP;
-    
-    if let Some(threshold) = threshold_2_open {
-        if basis_open2 >= threshold {
-            depth_operation = OperationType::Open2;
+    if !threshold_2_open.is_none() {
+        if let Some(threshold) = threshold_2_open {
+            if basis_open2 >= threshold {
+                depth_operation = OperationType::Open2;
+            }
         }
+    
     }
-    if let Some(threshold) = threshold_2_close {
-        if basis_close2 >= threshold {
-            depth_operation = OperationType::Open2;
+    if !threshold_2_close.is_none() {
+        if let Some(threshold) = threshold_2_close {
+            if basis_close2 <= threshold {
+                depth_operation = OperationType::Close2;
+            }
         }
     }
     order_book.operation_type = depth_operation;
