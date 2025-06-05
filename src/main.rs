@@ -15,6 +15,7 @@ use msg_engine::*;
 use redis_subscribe::redis_subscribe;
 use core::core_compute;
 use rest::getInstruments;
+use utils::get_timestamp;
 /*
  * importing okx rust API
  */
@@ -36,12 +37,6 @@ use tokio::sync::mpsc;
 use tokio::time::{sleep, timeout, Duration};
 use log4rs::init_file;
 use log::*;
-
-/*
- * Define for Production(0) or DemoTrading(1) 
- */
-static TEST: i32 = 0; //TODO: 1 is not okay?
-
 
 #[tokio::main]
 async fn main() {
@@ -90,7 +85,7 @@ async fn main() {
     let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
     write_private.send(auth_msg_private.into()).await.unwrap();
     let auth_resp_private = read_private.next().await.unwrap();
-    info!("A private websocket channel auth: {:?}", auth_resp_private);
+    println!("A private websocket channel auth: {:?}", auth_resp_private);
     let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
     let account_channel_handle = tokio::spawn(async move {
         loop {
@@ -130,15 +125,11 @@ async fn main() {
      */
     let mut options_order = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
     let (mut client_order, mut response_order) = connect_async(Production.private_websocket()).await.unwrap();
-    if TEST == 1 {
-        options_order = Options::new_with(DemoTrading, key.clone(), secret.clone(), passphrase.clone());
-        (client_order, response_order) = connect_async(DemoTrading.private_websocket()).await.unwrap();
-    }
     let (mut write_order, mut read_order) = client_order.split();
     let auth_msg_order = OKXAuth::ws_auth(options_order).unwrap();
     write_order.send(auth_msg_order.into()).await.unwrap();    
     let auth_resp_order = read_order.next().await.unwrap();
-    info!("A private order websocket channel auth: {:?}", auth_resp_order);
+    println!("A private order websocket channel auth: {:?}", auth_resp_order);
 
     /*
      * 查询订单信息WebSocket
@@ -146,15 +137,11 @@ async fn main() {
      */
     let mut options_order_info = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
     let (mut client_order_info, mut response_order_info) = connect_async(Production.private_websocket()).await.unwrap();
-    if TEST == 1 {
-        options_order_info = Options::new_with(DemoTrading, key.clone(), secret.clone(), passphrase.clone());
-        (client_order_info, response_order_info) = connect_async(DemoTrading.private_websocket()).await.unwrap();
-    }
     let (mut write_order_info, mut read_order_info) = client_order_info.split();
     let auth_msg_order_info = OKXAuth::ws_auth(options_order_info).unwrap();
     write_order_info.send(auth_msg_order_info.into()).await.unwrap();    
     let auth_resp_order_info = read_order_info.next().await.unwrap();
-    info!("A private order_info websocket channel auth: {:?}", auth_resp_order_info);
+    println!("A private order_info websocket channel auth: {:?}", auth_resp_order_info);
     for inst_id in spot_inst_ids.clone() { 
         let orders_info = OrdersInfoChannel {
             inst_id: String::from(inst_id),
@@ -187,7 +174,24 @@ async fn main() {
                 }
                 Err(_) => panic!("Error receiving message {:?}", msg),
             };
-            info!("!!!!!!!!!!!!!!!Orders Update {}", parsed_msg);
+            let instId = &parsed_msg["arg"]["instId"];
+            let ordId = &parsed_msg["data"][0]["ordId"];
+            let state = &parsed_msg["data"][0]["state"];
+            let fillPx = &parsed_msg["data"][0]["fillPx"];
+            let fillSz = &parsed_msg["data"][0]["fillSz"];
+            let ctime = &parsed_msg["data"][0]["cTime"];
+            let utime = &parsed_msg["data"][0]["uTime"];
+            if state.is_null() {
+                info!("!!!!!!!!!!!!!!!Orders Info Channel receives msg with unknown status {:?}", parsed_msg);
+            } else if state == "partially_filled" {
+                info!("<<<<<<<Orders Info Channel receives partially filled order: instd: {}, ordId: {}, fillPx: {}, fillSz: {}, ctime: {}, utime: {}", 
+                    instId, ordId, fillPx, fillSz, ctime, utime);
+            } else if state == "filled" {
+                info!("<<<<<<<Orders Info Channel receives filled order: instId: {}, ordId: {}, fillPx: {}, fillSz: {}, ctime: {}, utime: {}", 
+                    instId, ordId, fillPx, fillSz, ctime, utime);
+            } else {
+                info!("!!!!!!!!!!!!!!!Orders Info Channel receives msg with un-processed status {:?}", parsed_msg);
+            }
         }
     });
 
@@ -197,15 +201,11 @@ async fn main() {
      */
     let mut options = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
     let (mut client, mut response) = connect_async(Production.public_websocket()).await.unwrap();
-    if TEST == 1 {
-        options = Options::new_with(DemoTrading, key.clone(), secret.clone(), passphrase.clone());
-        (client, response) = connect_async(DemoTrading.public_websocket()).await.unwrap();
-    }
     let (mut write, mut read) = client.split();
     let auth_msg = OKXAuth::ws_auth(options).unwrap();
     write.send(auth_msg.into()).await.unwrap();    
     let auth_resp = read.next().await.unwrap();
-    info!("A public websocket channel auth: {:?}", auth_resp);
+    println!("A public websocket channel auth: {:?}", auth_resp);
     for inst_id in spot_inst_ids.clone() { // 遍历SPOT_inst_ids，创建Books并发送订阅消息，同时订阅books5（depth is 5）和bookstbt（just best）的数据
         let books = Books5 {
             inst_id: String::from(inst_id),
@@ -274,13 +274,13 @@ async fn main() {
                 if channel == "instruments" {
                     let inst_type = parsed_msg["arg"]["instType"].as_str().unwrap_or("Unknown").to_string();
                     info!("***************Instruments handler handles update msg: inst_type {:?}", inst_type);
-                    process_instruments_message(&parsed_msg["data"]).await;
+                    process_instruments_message(&parsed_msg["data"], spot_inst_ids.clone()).await;
                 } else if channel == "books5" {
-                    info!("***************Books handler handles BOOKS5 update msg: inst_id {:?}", inst_id);
+                    // info!("***************Books handler handles BOOKS5 update msg: inst_id {:?}", inst_id);
                     process_books5_message(inst_id.clone(), data).await;
                     tx_books.send(inst_id.clone()).await.unwrap();
                 } else if channel == "bbo-tbt" {
-                    info!("***************Books handler handles BBO-TBT update msg: inst_id {:?}", inst_id);
+                    // info!("***************Books handler handles BBO-TBT update msg: inst_id {:?}", inst_id);
                     process_bbotbt_message(inst_id.clone(), data).await;
                     tx_books.send(inst_id.clone()).await.unwrap();
                 } else {
@@ -302,7 +302,7 @@ async fn main() {
                     tx_compute.send((order_spot, order_swap)).await.unwrap();
                 },
                 None => {
-                    info!("###############Order Book Calculator: No orders were created.");
+                    // info!("###############Order Book Calculator: No orders were created.");
                 }
             }
         }
@@ -322,7 +322,6 @@ async fn main() {
                 Ok(Some(msg)) => {
                     let order_spot = msg.0;
                     let order_swap = msg.1;
-    
                     {
                         let inst_state_map = INST_STATE_MAP.read().await;
                         if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) || inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())) {
@@ -331,7 +330,7 @@ async fn main() {
                         }
                     }
     
-                    info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
+                    // info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
     
                     {
                         let mut inst_state_map = INST_STATE_MAP.write().await;
@@ -342,20 +341,24 @@ async fn main() {
                         orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
                         orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
     
-                        info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
+                        // info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
                     }
-    
-                    let _ = write_order.send(order_spot.clone().subscribe_message().into()).await; // Send messages to `write_order`
-                    let _ = write_order.send(order_swap.clone().subscribe_message().into()).await; // Send messages to `write_order`
+                    info!("<<<<<<<processing spot and swap order: spot_client_id: {:?}, swap_client_id: {:?}", 
+                        order_spot.clone().id, order_swap.clone().id);
+                    info!("<<<<<<<send order_spot: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
+                        order_spot.clone().id, order_spot.clone().inst_id, order_spot.clone().sz, order_spot.clone().price, get_timestamp(), order_spot.clone().threshold);
+                    let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
+                    info!("<<<<<<<send order_swap: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
+                        order_swap.clone().id, order_swap.clone().inst_id, order_swap.clone().sz, order_swap.clone().price, get_timestamp(), order_swap.clone().threshold);
+                    let _ = write_order.send(order_swap.clone().subscribe_message().into()).await;
                 },
                 Ok(None) => {
                     // This means `rx_order.recv()` returned `None`, i.e., the receiver has been closed.
-                    error!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
-                    break;
+                    panic!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
                 },
                 Err(_) => {
                     // Timeout happened after 20 seconds
-                    info!("$$$$$$$$$$$$$$Order Engine: No order received for 20 seconds, sending ping message.");
+                    // info!("$$$$$$$$$$$$$$Order Engine: No order received for 20 seconds, sending ping message.");
                     let _ = write_order.send("ping".into()).await;
                 },
             }
@@ -370,39 +373,41 @@ async fn main() {
                 Ok(Some(Ok(ws_msg))) => {
                     match ws_msg {
                         Message::Text(text) => {
-                            info!("$$$$$$$$$$$$$$$Order Recv msg {:?}", text);
                             if text == "pong" {
                                 println!("Order Recv Channel received a pong message, Alive!");
                                 continue;
                             }
                             let parsed_msg: Value = serde_json::from_str(&text).expect("Failed to parse JSON");
-                
-                            let id = parsed_msg["id"].as_str().unwrap_or("Unknown").to_string();
+                            let clientId = &parsed_msg["id"];
+                            let ts = &parsed_msg["data"][0]["ts"];
+                            let orderId = &parsed_msg["data"][0]["ordId"];
+                            info!("<<<<<<<Order sucessully placed: clientId: {}, ts: {}, orderId: {}", 
+                                clientId, ts, orderId);
+                            // let id = parsed_msg["id"].as_str().unwrap_or("Unknown").to_string();
                             {
                                 let orderid2inst = ORDERID2INST.read().await;
-                                let mut inst_id = match orderid2inst.get(&id) {
+                                let mut inst_id = match orderid2inst.get(&clientId.to_string()) {
                                     Some(inst) => inst.to_string(),
                                     None => String::new(),
                                 };
                                 let mut inst_state_map = INST_STATE_MAP.write().await;
                                 // inst_state_map.remove(&inst_id); //TODO: only allow trade one time
-                                info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
+                                // info!("$$$$$$$$$$$$$$$Order Recv: Update inst_id state map {:?} order map {:?}", inst_state_map, orderid2inst);
                             }
                         }
                         other => {
-                            info!("Received non-text WebSocket message: {:?}", other);
+                            panic!("Received non-text WebSocket message: {:?}", other);
                         }
                     }
                 }
                 Ok(Some(Err(e))) => {
-                    error!("WebSocket error: {:?}", e);
+                    panic!("WebSocket error: {:?}", e);
                 }
                 Ok(None) => {
-                    error!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
-                    break;
+                    panic!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
                 }
                 Err(_) => {
-                    info!("$$$$$$$$$$$$$$ Order Recv Channel: No order received for 20 seconds.");
+                    panic!("$$$$$$$$$$$$$$ Order Recv Channel: No order received for 20 seconds.");
                 }
             }  
         }

@@ -13,6 +13,8 @@ pub async fn calculate_basis_and_signal(spot_inst_id: String, swap_inst_id: Stri
         pp_best_bid_qty: 0.0, 
         pp_best_ask: 0.0,
         pp_best_ask_qty: 0.0, 
+        basis_open2: 0.0,
+        basis_close2: 0.0,
     };
     
     let mut inst2bestbid;
@@ -82,5 +84,7 @@ pub async fn calculate_basis_and_signal(spot_inst_id: String, swap_inst_id: Stri
         }
     }
     order_book.operation_type = depth_operation;
+    order_book.basis_open2 = basis_open2;
+    order_book.basis_close2 = basis_close2;
     order_book
 }

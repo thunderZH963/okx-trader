@@ -4,12 +4,15 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
 use log::*;
 
-pub async fn process_instruments_message(data: &Value) {
+pub async fn process_instruments_message(data: &Value, spot_inst_ids: Vec<&str>) {
     let mut inst2lotsz = INST2LOTSZ.lock().await;
     let mut inst2minsz = INST2MINSZ.lock().await;
     let mut inst2ctval = INST2CTVAL.lock().await;
     for instrument in data.as_array().unwrap_or(&vec![]) {
         let inst_id = instrument["instId"].to_string();
+        if spot_inst_ids.contains(&inst_id.as_str()) == false {
+            continue;
+        }
         let lotSz = instrument["lotSz"].to_string();
         let minSz = instrument["minSz"].to_string();  
         let ct_val = instrument["ctVal"].to_string();
@@ -89,7 +92,7 @@ pub async fn process_books5_message(inst_id: String, data: &Value) {
 
     let mut inst2bestask = INST2BESTASK_DEPTH.lock().await;
     inst2bestask.insert(inst_id.clone(), res_ask.clone().get(0).unwrap().clone());
-    info!("BOOKS5 update inst_id {:?},  inst2bestbid{:?} and inst2bestask", inst2bestbid, inst2bestask);
+    // info!("BOOKS5 update inst_id {:?},  inst2bestbid{:?} and inst2bestask", inst2bestbid, inst2bestask);
 }
 
 pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
@@ -121,7 +124,7 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
             inst2bestbid.insert(inst_id.clone(), vec![price, nums, orders]);
         }
     }
-    info!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);
+    // info!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);
 
 }
 

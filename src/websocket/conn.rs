@@ -40,6 +40,8 @@ pub struct Order {
     pub sz: String,
     pub tgtCcy: String,
     pub reduceOnly: String,
+    pub price: String,
+    pub threshold: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -196,7 +198,7 @@ impl WebsocketChannel for Order {
     type ArgType<'de> = BookChannelArg<'de>;
 
     fn subscribe_message(&self) -> String {
-        let Order { id, side, inst_id, tdMode, ordType, sz, tgtCcy, reduceOnly} = self;
+        let Order { id, side, inst_id, tdMode, ordType, sz, tgtCcy, reduceOnly, price, threshold} = self;
         if tgtCcy == "1" {
             json!({
                 "id": id,

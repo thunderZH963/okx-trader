@@ -1,9 +1,12 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::{globals::{INST2BESTASK, INST2BESTASK_DEPTH, INST2BESTBID, INST2BESTBID_DEPTH}, models::{OperationType, OrderBook}};
 
-pub fn get_timestamp(start: SystemTime) -> Result<u64, std::time::SystemTimeError> {
-    let since_epoch = start.duration_since(UNIX_EPOCH)?;
-    Ok(since_epoch.as_secs() * 1000 + u64::from(since_epoch.subsec_nanos()) / 1_000_000)
+pub fn get_timestamp() -> u128 {
+    let time = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis();
+    time
 }
 
 pub fn generate_nanoid() -> String {

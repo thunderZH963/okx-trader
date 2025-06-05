@@ -26,4 +26,6 @@ pub struct OrderBook {
     pub pp_best_bid_qty: f64,
     pub pp_best_ask: f64,
     pub pp_best_ask_qty: f64,
+    pub basis_open2: f64,
+    pub basis_close2: f64,
 }

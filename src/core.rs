@@ -26,11 +26,11 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         swap_inst_id = format!("{}-SWAP", msg);
         spot_inst_id = msg.clone();
     }
-    info!("###############Message Receiving Processor: computing engine begins to process swap/spot: {:?} {:?}", swap_inst_id, spot_inst_id);
+    // info!("###############Message Receiving Processor: computing engine begins to process swap/spot: {:?} {:?}", swap_inst_id, spot_inst_id);
     
     let inst_state_map = INST_STATE_MAP.read().await;
     if inst_state_map.contains_key(&spot_inst_id) || inst_state_map.contains_key(&swap_inst_id) {
-        info!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
+        // info!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
         return None;
     }
 
@@ -46,7 +46,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
     {
         let trade_signals = GLOBAL_TRADE_SIGNALS.lock().await;
         if !trade_signals.contains_key(&spot_inst_id) {
-            info!("###############Trade Signal Acquirer: No Signal coming, Skipping");
+            // info!("###############Trade Signal Acquirer: No Signal coming, Skipping");
             return None;
         }
         let signal = trade_signals.get(&spot_inst_id);
@@ -57,9 +57,10 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
     }
     let mut allow_open = !threshold_2_open.is_none(); //TODO: process None in TRADE_SIGNALS
     let mut allow_close = !threshold_2_close.is_none();  //TODO: process None in TRADE_SIGNALS
-    info!("###############Trade Signal Acquirer: trade signal is threshold_2_open={:?}, threshold_2_close={:?}, threshold_2_caution={:?}, threshold_2_number={:?}", threshold_2_open, threshold_2_close, threshold_2_caution, threshold_2_number);
+    // info!("###############Trade Signal Acquirer: trade signal is threshold_2_open={:?}, threshold_2_close={:?}, threshold_2_caution={:?}, threshold_2_number={:?}", threshold_2_open, threshold_2_close, threshold_2_caution, threshold_2_number);
     if !allow_open && !allow_close {
-        info!("###############Skipping this inst_id in compute_handle because none signal");
+        // info!("###############Skipping this inst_id in compute_handle because none signal");
+        return None;
     }
 
     /*
@@ -68,16 +69,16 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         */
     let orderbook_depth =  calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), true, threshold_2_open, threshold_2_close).await;
     let orderbook = calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), false, threshold_2_open, threshold_2_close).await;
-    info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
+    // info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
     
     
     if orderbook_depth.operation_type == OperationType::NoOP || orderbook.operation_type == OperationType::NoOP { // skip noop signal
-        info!("###############Order Book Calculator: skipping because of NOOP");
+        // info!("###############Order Book Calculator: skipping because of NOOP");
         return None;
     }
 
     if orderbook_depth.operation_type != orderbook.operation_type {
-        info!("###############Skipping this inst_id in compute_handle because not matched op type or none signal");
+        // info!("###############Skipping this inst_id in compute_handle because not matched op type or none signal");
         return None;
     }
 
@@ -103,7 +104,6 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             
             spot_lot_size = inst2lotsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
             swap_lot_size = inst2lotsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
-            // info!("debug, {:?} {:?}", inst2lotsz, spot_lot_size);
             spot_min_size = inst2minsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
             swap_min_size = inst2minsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
             lot_size = spot_lot_size.max(swap_lot_size);
@@ -113,7 +113,6 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             let ccy2bal = CCY2BAL.lock().await;
             balance_usdt = ccy2bal.get("USDT").unwrap_or(&Decimal::zero()).clone();
             position_spot = ccy2bal.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
-            // info!("debug {:?} {:?}", spot_inst_id, ccy2bal);
         }
         let is_open = orderbook.operation_type == OperationType::Open2;
         let is_close = !is_open;
@@ -268,10 +267,10 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             {
                 let mut local_deltas_spot = LOCAL_DELTAS_SPOT.lock().await; //update local spot
                 local_deltas_spot.insert(spot_inst_id.clone(), trade_qty_decimal.to_f64().unwrap());
-                info!(
-                    "###############Update Local Delta: {:?}",
-                    local_deltas_spot
-                );
+                // info!(
+                //     "###############Update Local Delta: {:?}",
+                //     local_deltas_spot
+                // );
             }
             let order_spot = Order {
                 id: spot_generate_client_order_id(&OperationType::Open2, &nanoid),
@@ -282,6 +281,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 sz: trade_qty_decimal.to_string(),
                 tgtCcy: "1".to_string(),
                 reduceOnly: "0".to_string(),
+                price: unit_price_spot.to_string(),
+                threshold: threshold_2_open.unwrap_or(0.0).to_string(),
                 // sz: "1.0".to_string(),
             };
             let order_swap = Order {
@@ -293,6 +294,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 sz: (trade_qty_decimal / swap_ctval).to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "0".to_string(),
+                price: unit_price_swap.to_string(),
+                threshold: threshold_2_open.unwrap_or(0.0).to_string(),
             };
             return Some((order_spot, order_swap));
         } else {
@@ -305,6 +308,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 sz: trade_qty_decimal.to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "0".to_string(),
+                price: unit_price_spot.to_string(),
+                threshold: threshold_2_close.unwrap_or(0.0).to_string(),
             };
             let order_swap = Order {
                 id: futures_generate_client_order_id(&OperationType::Close2, &nanoid),
@@ -315,6 +320,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 sz: (trade_qty_decimal / swap_ctval).to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "1".to_string(),
+                price: unit_price_swap.to_string(),
+                threshold: threshold_2_close.unwrap_or(0.0).to_string(),
             };
             return Some((order_spot, order_swap));
         }
