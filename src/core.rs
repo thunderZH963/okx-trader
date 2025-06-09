@@ -69,7 +69,6 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         */
     let orderbook_depth =  calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), true, threshold_2_open, threshold_2_close).await;
     let orderbook = calculate_basis_and_signal(spot_inst_id.clone(), swap_inst_id.clone(), false, threshold_2_open, threshold_2_close).await;
-    // info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
     
     
     if orderbook_depth.operation_type == OperationType::NoOP || orderbook.operation_type == OperationType::NoOP { // skip noop signal
@@ -82,6 +81,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         return None;
     }
 
+    
 
     if orderbook_depth.operation_type == orderbook.operation_type {
         /*
@@ -106,8 +106,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             swap_lot_size = inst2lotsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
             spot_min_size = inst2minsz.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
             swap_min_size = inst2minsz.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
-            lot_size = spot_lot_size.max(swap_lot_size);
             swap_ctval = inst2ctval.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
+            lot_size = spot_lot_size.max(swap_lot_size * swap_ctval);
         }
         {
             let ccy2bal = CCY2BAL.lock().await;
@@ -123,8 +123,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             }
         };
         
-        info!("###############Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
-                                                        spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_spot, constraint_percent_qty);
+        info!("###############Signal {:?} Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
+                                                         is_open, spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_spot, constraint_percent_qty);
         
         /*
             * Get basis trade qty
@@ -178,7 +178,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         } else {
             swap_best_ask
         };
-        info!("###############Basic Order Qty Calculator: trade_qty={:?}, unit_price_spot={:?} and unit_price_swap={:?}", trade_qty, unit_price_spot, unit_price_swap);
+        // info!("###############Signal {:?} Basic Order Qty Calculator: ps_best_ask_qty = {:?}, ps_best_bid_qty = {:?}, pp_best_bid_qty = {:?}, pp_best_ask_qty = {:?}, trade_qty={:?}, unit_price_spot={:?} and unit_price_swap={:?}", is_open, ps_best_ask_qty, ps_best_bid_qty, pp_best_ask_qty, pp_best_bid_qty, trade_qty, unit_price_spot, unit_price_swap);
 
         if is_open {
             let spot_delta;
@@ -187,12 +187,16 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 if let Some(v) = local_deltas_spot.get(&spot_inst_id) {
                     spot_delta = *v;
                 } else {
+                    info!("unsatisfied local_deltas_spot for spot_inst_id: {:?}", spot_inst_id);
+                    info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
                     return None;
                 }
             }
             let open_qty_max = match threshold_2_number {
                 Some(num) => num,
                 None => {
+                    info!("unsatisfied threshold_2_number {:?} for spot_inst_id: {:?}", threshold_2_number, spot_inst_id);
+                    info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
                     return None;
                 }
             };
@@ -222,6 +226,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         let mut trade_qty_decimal = Decimal::from_f64(trade_qty).unwrap();
         if is_close {
             if position_spot.to_f64().unwrap() <= 0.0 {
+                // info!("unsatisfied position_spot {:?} for spot_inst_id: {:?}", position_spot, spot_inst_id);
                 return None;
             }
             if trade_qty * unit_price_spot > *MAX_CLOSE_VALUE // Maximum close price constraint
@@ -234,6 +239,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 trade_qty_decimal = position_spot;
             }
             if trade_qty_decimal < spot_min_size { //skip when spot_min_sz is not saisfied
+                info!("unsatisfied spot_min_size {:?} for spot_inst_id: {:?}", spot_min_size, spot_inst_id);
+                info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
                 return None;
             }
             info!("###############Basic Order Qty Adjusting for CLOSE2: trade_qty_decimal={:?}", trade_qty_decimal); 
@@ -243,14 +250,21 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         // trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
 
         if trade_qty_decimal.to_f64().unwrap() <= 0.0 { // Check if quantity is valid
+            info!("unsatisfied zero trade_qty_decimal {:?} for spot_inst_id: {:?}", trade_qty_decimal, spot_inst_id);
+            info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
             return None;
         }
         trade_qty_decimal = trade_qty_decimal * (*SPOT_TRADE_RATIO);
         trade_qty_decimal = (trade_qty_decimal / lot_size).floor() * lot_size;
         // trade_qty_decimal = Decimal::new(10, 0); //TODO: set by hard code
         if trade_qty_decimal < spot_min_size // Lot size constraint
-            || trade_qty_decimal < swap_min_size
+            || trade_qty_decimal / swap_ctval < swap_min_size
         {
+            info!(
+                "unsatisfied trade_qty_decimal {:?} for spot_inst_id: {:?}, spot_min_size: {:?}, swap_min_size: {:?}",
+                trade_qty_decimal, spot_inst_id, spot_min_size, swap_min_size
+            );
+            info!("###############Order Book Calculator: orderbook for depth is {:?}, orderbook for non-depth is {:?}", orderbook_depth, orderbook);
             return None;
         }
 
@@ -285,13 +299,14 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 threshold: threshold_2_open.unwrap_or(0.0).to_string(),
                 // sz: "1.0".to_string(),
             };
+            let trade_qty_decimal_swap = (trade_qty_decimal / swap_ctval / lot_size).floor() * lot_size;
             let order_swap = Order {
                 id: futures_generate_client_order_id(&OperationType::Open2, &nanoid),
                 side: "sell".to_string(),
                 inst_id: swap_inst_id,
                 tdMode: "cross".to_string(),
                 ordType: "market".to_string(),
-                sz: (trade_qty_decimal / swap_ctval).to_string(),
+                sz: trade_qty_decimal_swap.to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "0".to_string(),
                 price: unit_price_swap.to_string(),
@@ -311,13 +326,14 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
                 price: unit_price_spot.to_string(),
                 threshold: threshold_2_close.unwrap_or(0.0).to_string(),
             };
+            let trade_qty_decimal_swap = (trade_qty_decimal / swap_ctval / lot_size).floor() * lot_size;
             let order_swap = Order {
                 id: futures_generate_client_order_id(&OperationType::Close2, &nanoid),
                 side: "buy".to_string(),
                 inst_id: swap_inst_id,
                 tdMode: "cross".to_string(),
                 ordType: "market".to_string(),
-                sz: (trade_qty_decimal / swap_ctval).to_string(),
+                sz: trade_qty_decimal_swap.to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "1".to_string(),
                 price: unit_price_swap.to_string(),

@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Production;
+unsafe impl Send for Production {}
+unsafe impl Sync for Production {}
 
 impl OKXEnv for Production {
     fn rest(&self) -> &str {
@@ -64,6 +66,9 @@ pub struct Options {
     pub passphrase: Option<String>,
 }
 
+unsafe impl Send for Options {}
+unsafe impl Sync for Options {}
+
 impl Options {
     pub fn new(env: impl OKXEnv + 'static) -> Options {
         Self {
@@ -87,6 +92,7 @@ impl Options {
             passphrase: Some(passphrase.as_ref().to_string()),
         }
     }
+
 }
 
 impl Options {

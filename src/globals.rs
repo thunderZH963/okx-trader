@@ -99,7 +99,7 @@ lazy_static::lazy_static! {
 }
 
 lazy_static! {
-    pub static ref PING_TIMEOUT: u64 = 20;
+    pub static ref PING_TIMEOUT: u64 = 10;
 }
 
 lazy_static! {
@@ -125,6 +125,12 @@ lazy_static! {
         *redis_db
     ))
     .unwrap();
+}
+
+lazy_static! {
+    pub static ref key: String = std::env::var("OKX_API_KEY").unwrap();
+    pub static ref secret: String = std::env::var("OKX_API_SECRET").unwrap();
+    pub static ref passphrase: String = std::env::var("OKX_API_PASSPHRASE").unwrap();
 }
 
 pub type _ThresArray = [Option<f64>; 3];

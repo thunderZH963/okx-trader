@@ -1,846 +1,842 @@
 {
-    "AR": {
-        "spot": "AR-USDT",
-        "swap": "AR-USDT-SWAP"
-    },
-    "IOTA": {
-        "spot": "IOTA-USDT",
-        "swap": "IOTA-USDT-SWAP"
-    },
-    "MKR": {
-        "spot": "MKR-USDT",
-        "swap": "MKR-USDT-SWAP"
-    },
-    "CAT": {
-        "spot": "CAT-USDT",
-        "swap": "CAT-USDT-SWAP"
-    },
-    "AVAX": {
-        "spot": "AVAX-USDT",
-        "swap": "AVAX-USDT-SWAP"
-    },
-    "BIGTIME": {
-        "spot": "BIGTIME-USDT",
-        "swap": "BIGTIME-USDT-SWAP"
-    },
-    "PYTH": {
-        "spot": "PYTH-USDT",
-        "swap": "PYTH-USDT-SWAP"
-    },
-    "TRB": {
-        "spot": "TRB-USDT",
-        "swap": "TRB-USDT-SWAP"
-    },
-    "ADA": {
-        "spot": "ADA-USDT",
-        "swap": "ADA-USDT-SWAP"
-    },
-    "IP": {
-        "spot": "IP-USDT",
-        "swap": "IP-USDT-SWAP"
-    },
-    "USDC": {
-        "spot": "USDC-USDT",
-        "swap": "USDC-USDT-SWAP"
-    },
-    "CHZ": {
-        "spot": "CHZ-USDT",
-        "swap": "CHZ-USDT-SWAP"
-    },
-    "MAJOR": {
-        "spot": "MAJOR-USDT",
-        "swap": "MAJOR-USDT-SWAP"
-    },
-    "ANIME": {
-        "spot": "ANIME-USDT",
-        "swap": "ANIME-USDT-SWAP"
-    },
-    "ACT": {
-        "spot": "ACT-USDT",
-        "swap": "ACT-USDT-SWAP"
-    },
-    "LOOKS": {
-        "spot": "LOOKS-USDT",
-        "swap": "LOOKS-USDT-SWAP"
-    },
-    "CSPR": {
-        "spot": "CSPR-USDT",
-        "swap": "CSPR-USDT-SWAP"
-    },
-    "AIXBT": {
-        "spot": "AIXBT-USDT",
-        "swap": "AIXBT-USDT-SWAP"
-    },
-    "GMT": {
-        "spot": "GMT-USDT",
-        "swap": "GMT-USDT-SWAP"
-    },
-    "ICX": {
-        "spot": "ICX-USDT",
-        "swap": "ICX-USDT-SWAP"
-    },
-    "COMP": {
-        "spot": "COMP-USDT",
-        "swap": "COMP-USDT-SWAP"
-    },
-    "LAYER": {
-        "spot": "LAYER-USDT",
-        "swap": "LAYER-USDT-SWAP"
-    },
-    "ORBS": {
-        "spot": "ORBS-USDT",
-        "swap": "ORBS-USDT-SWAP"
-    },
-    "QTUM": {
-        "spot": "QTUM-USDT",
-        "swap": "QTUM-USDT-SWAP"
-    },
-    "CTC": {
-        "spot": "CTC-USDT",
-        "swap": "CTC-USDT-SWAP"
-    },
-    "LDO": {
-        "spot": "LDO-USDT",
-        "swap": "LDO-USDT-SWAP"
-    },
-    "NC": {
-        "spot": "NC-USDT",
-        "swap": "NC-USDT-SWAP"
-    },
-    "ZRX": {
-        "spot": "ZRX-USDT",
-        "swap": "ZRX-USDT-SWAP"
-    },
-    "KAITO": {
-        "spot": "KAITO-USDT",
-        "swap": "KAITO-USDT-SWAP"
-    },
-    "JST": {
-        "spot": "JST-USDT",
-        "swap": "JST-USDT-SWAP"
-    },
-    "T": {
-        "spot": "T-USDT",
-        "swap": "T-USDT-SWAP"
-    },
-    "BNT": {
-        "spot": "BNT-USDT",
-        "swap": "BNT-USDT-SWAP"
-    },
-    "GLM": {
-        "spot": "GLM-USDT",
-        "swap": "GLM-USDT-SWAP"
-    },
-    "TIA": {
-        "spot": "TIA-USDT",
-        "swap": "TIA-USDT-SWAP"
-    },
-    "LPT": {
-        "spot": "LPT-USDT",
-        "swap": "LPT-USDT-SWAP"
-    },
-    "AXS": {
-        "spot": "AXS-USDT",
-        "swap": "AXS-USDT-SWAP"
-    },
-    "ALGO": {
-        "spot": "ALGO-USDT",
-        "swap": "ALGO-USDT-SWAP"
-    },
-    "PERP": {
-        "spot": "PERP-USDT",
-        "swap": "PERP-USDT-SWAP"
-    },
-    "YFI": {
-        "spot": "YFI-USDT",
-        "swap": "YFI-USDT-SWAP"
-    },
-    "ARB": {
-        "spot": "ARB-USDT",
-        "swap": "ARB-USDT-SWAP"
-    },
-    "DUCK": {
-        "spot": "DUCK-USDT",
-        "swap": "DUCK-USDT-SWAP"
-    },
-    "GMX": {
-        "spot": "GMX-USDT",
-        "swap": "GMX-USDT-SWAP"
-    },
-    "SATS": {
-        "spot": "SATS-USDT",
-        "swap": "SATS-USDT-SWAP"
-    },
-    "W": {
-        "spot": "W-USDT",
-        "swap": "W-USDT-SWAP"
-    },
-    "CELO": {
-        "spot": "CELO-USDT",
-        "swap": "CELO-USDT-SWAP"
-    },
-    "PARTI": {
-        "spot": "PARTI-USDT",
-        "swap": "PARTI-USDT-SWAP"
-    },
-    "ACE": {
-        "spot": "ACE-USDT",
-        "swap": "ACE-USDT-SWAP"
-    },
-    "BCH": {
-        "spot": "BCH-USDT",
-        "swap": "BCH-USDT-SWAP"
-    },
-    "SSV": {
-        "spot": "SSV-USDT",
-        "swap": "SSV-USDT-SWAP"
-    },
-    "XAUT": {
-        "spot": "XAUT-USDT",
-        "swap": "XAUT-USDT-SWAP"
-    },
-    "CRV": {
-        "spot": "CRV-USDT",
-        "swap": "CRV-USDT-SWAP"
-    },
-    "GODS": {
-        "spot": "GODS-USDT",
-        "swap": "GODS-USDT-SWAP"
-    },
-    "TRX": {
-        "spot": "TRX-USDT",
-        "swap": "TRX-USDT-SWAP"
-    },
-    "DYDX": {
-        "spot": "DYDX-USDT",
-        "swap": "DYDX-USDT-SWAP"
-    },
-    "UNI": {
-        "spot": "UNI-USDT",
-        "swap": "UNI-USDT-SWAP"
-    },
-    "ZRO": {
-        "spot": "ZRO-USDT",
-        "swap": "ZRO-USDT-SWAP"
-    },
-    "USTC": {
-        "spot": "USTC-USDT",
-        "swap": "USTC-USDT-SWAP"
-    },
-    "PRCL": {
-        "spot": "PRCL-USDT",
-        "swap": "PRCL-USDT-SWAP"
-    },
-    "RAY": {
-        "spot": "RAY-USDT",
-        "swap": "RAY-USDT-SWAP"
-    },
-    "OP": {
-        "spot": "OP-USDT",
-        "swap": "OP-USDT-SWAP"
-    },
-    "SCR": {
-        "spot": "SCR-USDT",
-        "swap": "SCR-USDT-SWAP"
-    },
-    "LSK": {
-        "spot": "LSK-USDT",
-        "swap": "LSK-USDT-SWAP"
-    },
-    "ETHW": {
-        "spot": "ETHW-USDT",
-        "swap": "ETHW-USDT-SWAP"
-    },
-    "SHIB": {
-        "spot": "SHIB-USDT",
-        "swap": "SHIB-USDT-SWAP"
-    },
-    "CVX": {
-        "spot": "CVX-USDT",
-        "swap": "CVX-USDT-SWAP"
-    },
-    "JOE": {
-        "spot": "JOE-USDT",
-        "swap": "JOE-USDT-SWAP"
-    },
-    "BTC": {
-        "spot": "BTC-USDC",
-        "swap": "BTC-USDC-SWAP"
-    },
-    "DGB": {
-        "spot": "DGB-USDT",
-        "swap": "DGB-USDT-SWAP"
-    },
-    "AAVE": {
-        "spot": "AAVE-USDT",
-        "swap": "AAVE-USDT-SWAP"
-    },
-    "NOT": {
-        "spot": "NOT-USDT",
-        "swap": "NOT-USDT-SWAP"
-    },
-    "METIS": {
-        "spot": "METIS-USDT",
-        "swap": "METIS-USDT-SWAP"
-    },
-    "OM": {
-        "spot": "OM-USDT",
-        "swap": "OM-USDT-SWAP"
-    },
-    "API3": {
-        "spot": "API3-USDT",
-        "swap": "API3-USDT-SWAP"
-    },
-    "WAXP": {
-        "spot": "WAXP-USDT",
-        "swap": "WAXP-USDT-SWAP"
-    },
-    "JUP": {
-        "spot": "JUP-USDT",
-        "swap": "JUP-USDT-SWAP"
-    },
-    "SAND": {
-        "spot": "SAND-USDT",
-        "swap": "SAND-USDT-SWAP"
-    },
-    "SUI": {
-        "spot": "SUI-USDT",
-        "swap": "SUI-USDT-SWAP"
-    },
-    "LRC": {
-        "spot": "LRC-USDT",
-        "swap": "LRC-USDT-SWAP"
-    },
-    "FLOKI": {
-        "spot": "FLOKI-USDT",
-        "swap": "FLOKI-USDT-SWAP"
-    },
-    "BONK": {
-        "spot": "BONK-USDT",
-        "swap": "BONK-USDT-SWAP"
-    },
-    "APE": {
-        "spot": "APE-USDT",
-        "swap": "APE-USDT-SWAP"
-    },
-    "LUNA": {
-        "spot": "LUNA-USDT",
-        "swap": "LUNA-USDT-SWAP"
-    },
-    "AEVO": {
-        "spot": "AEVO-USDT",
-        "swap": "AEVO-USDT-SWAP"
-    },
-    "SLERF": {
-        "spot": "SLERF-USDT",
-        "swap": "SLERF-USDT-SWAP"
-    },
-    "DOT": {
-        "spot": "DOT-USDT",
-        "swap": "DOT-USDT-SWAP"
-    },
-    "J": {
-        "spot": "J-USDT",
-        "swap": "J-USDT-SWAP"
-    },
-    "ONT": {
-        "spot": "ONT-USDT",
-        "swap": "ONT-USDT-SWAP"
-    },
-    "RSR": {
-        "spot": "RSR-USDT",
-        "swap": "RSR-USDT-SWAP"
-    },
-    "SLP": {
-        "spot": "SLP-USDT",
-        "swap": "SLP-USDT-SWAP"
-    },
-    "WCT": {
-        "spot": "WCT-USDT",
-        "swap": "WCT-USDT-SWAP"
-    },
-    "XLM": {
-        "spot": "XLM-USDT",
-        "swap": "XLM-USDT-SWAP"
-    },
-    "EIGEN": {
-        "spot": "EIGEN-USDT",
-        "swap": "EIGEN-USDT-SWAP"
-    },
-    "KNC": {
-        "spot": "KNC-USDT",
-        "swap": "KNC-USDT-SWAP"
-    },
-    "MANA": {
-        "spot": "MANA-USDT",
-        "swap": "MANA-USDT-SWAP"
-    },
-    "SWEAT": {
-        "spot": "SWEAT-USDT",
-        "swap": "SWEAT-USDT-SWAP"
-    },
-    "YGG": {
-        "spot": "YGG-USDT",
-        "swap": "YGG-USDT-SWAP"
-    },
-    "GAS": {
-        "spot": "GAS-USDT",
-        "swap": "GAS-USDT-SWAP"
-    },
-    "CVC": {
-        "spot": "CVC-USDT",
-        "swap": "CVC-USDT-SWAP"
-    },
-    "S": {
-        "spot": "S-USDT",
-        "swap": "S-USDT-SWAP"
-    },
-    "AIDOGE": {
-        "spot": "AIDOGE-USDT",
-        "swap": "AIDOGE-USDT-SWAP"
-    },
-    "CETUS": {
-        "spot": "CETUS-USDT",
-        "swap": "CETUS-USDT-SWAP"
-    },
-    "BICO": {
-        "spot": "BICO-USDT",
-        "swap": "BICO-USDT-SWAP"
-    },
-    "FLOW": {
-        "spot": "FLOW-USDT",
-        "swap": "FLOW-USDT-SWAP"
-    },
-    "KSM": {
-        "spot": "KSM-USDT",
-        "swap": "KSM-USDT-SWAP"
-    },
-    "DEGEN": {
-        "spot": "DEGEN-USDT",
-        "swap": "DEGEN-USDT-SWAP"
-    },
-    "BLUR": {
-        "spot": "BLUR-USDT",
-        "swap": "BLUR-USDT-SWAP"
-    },
-    "ETC": {
-        "spot": "ETC-USDT",
-        "swap": "ETC-USDT-SWAP"
-    },
-    "STORJ": {
-        "spot": "STORJ-USDT",
-        "swap": "STORJ-USDT-SWAP"
-    },
-    "MINA": {
-        "spot": "MINA-USDT",
-        "swap": "MINA-USDT-SWAP"
-    },
-    "OL": {
-        "spot": "OL-USDT",
-        "swap": "OL-USDT-SWAP"
+    "BSV": {
+        "spot": "BSV-USDT",
+        "swap": "BSV-USDT-SWAP"
     },
     "ORDI": {
         "spot": "ORDI-USDT",
         "swap": "ORDI-USDT-SWAP"
     },
-    "TRUMP": {
-        "spot": "TRUMP-USDT",
-        "swap": "TRUMP-USDT-SWAP"
-    },
-    "WOO": {
-        "spot": "WOO-USDT",
-        "swap": "WOO-USDT-SWAP"
-    },
-    "TURBO": {
-        "spot": "TURBO-USDT",
-        "swap": "TURBO-USDT-SWAP"
-    },
-    "ENS": {
-        "spot": "ENS-USDT",
-        "swap": "ENS-USDT-SWAP"
-    },
-    "INJ": {
-        "spot": "INJ-USDT",
-        "swap": "INJ-USDT-SWAP"
-    },
-    "BIO": {
-        "spot": "BIO-USDT",
-        "swap": "BIO-USDT-SWAP"
-    },
-    "ATH": {
-        "spot": "ATH-USDT",
-        "swap": "ATH-USDT-SWAP"
-    },
-    "AUCTION": {
-        "spot": "AUCTION-USDT",
-        "swap": "AUCTION-USDT-SWAP"
-    },
-    "ZENT": {
-        "spot": "ZENT-USDT",
-        "swap": "ZENT-USDT-SWAP"
-    },
-    "RDNT": {
-        "spot": "RDNT-USDT",
-        "swap": "RDNT-USDT-SWAP"
-    },
-    "IMX": {
-        "spot": "IMX-USDT",
-        "swap": "IMX-USDT-SWAP"
-    },
-    "ETHFI": {
-        "spot": "ETHFI-USDT",
-        "swap": "ETHFI-USDT-SWAP"
-    },
-    "PEPE": {
-        "spot": "PEPE-USDT",
-        "swap": "PEPE-USDT-SWAP"
-    },
-    "AGLD": {
-        "spot": "AGLD-USDT",
-        "swap": "AGLD-USDT-SWAP"
-    },
-    "ZIL": {
-        "spot": "ZIL-USDT",
-        "swap": "ZIL-USDT-SWAP"
-    },
-    "XRP": {
-        "spot": "XRP-USDT",
-        "swap": "XRP-USDT-SWAP"
-    },
-    "BAT": {
-        "spot": "BAT-USDT",
-        "swap": "BAT-USDT-SWAP"
+    "OP": {
+        "spot": "OP-USDT",
+        "swap": "OP-USDT-SWAP"
     },
     "APT": {
         "spot": "APT-USDT",
         "swap": "APT-USDT-SWAP"
     },
-    "STRK": {
-        "spot": "STRK-USDT",
-        "swap": "STRK-USDT-SWAP"
+    "QTUM": {
+        "spot": "QTUM-USDT",
+        "swap": "QTUM-USDT-SWAP"
     },
-    "ALPHA": {
-        "spot": "ALPHA-USDT",
-        "swap": "ALPHA-USDT-SWAP"
+    "LSK": {
+        "spot": "LSK-USDT",
+        "swap": "LSK-USDT-SWAP"
     },
     "XCH": {
         "spot": "XCH-USDT",
         "swap": "XCH-USDT-SWAP"
     },
-    "GRT": {
-        "spot": "GRT-USDT",
-        "swap": "GRT-USDT-SWAP"
-    },
-    "MASK": {
-        "spot": "MASK-USDT",
-        "swap": "MASK-USDT-SWAP"
-    },
-    "SOL": {
-        "spot": "SOL-USDT",
-        "swap": "SOL-USDT-SWAP"
-    },
-    "FXS": {
-        "spot": "FXS-USDT",
-        "swap": "FXS-USDT-SWAP"
-    },
-    "BAL": {
-        "spot": "BAL-USDT",
-        "swap": "BAL-USDT-SWAP"
-    },
-    "MEW": {
-        "spot": "MEW-USDT",
-        "swap": "MEW-USDT-SWAP"
-    },
-    "RVN": {
-        "spot": "RVN-USDT",
-        "swap": "RVN-USDT-SWAP"
-    },
-    "BNB": {
-        "spot": "BNB-USDT",
-        "swap": "BNB-USDT-SWAP"
-    },
-    "ENJ": {
-        "spot": "ENJ-USDT",
-        "swap": "ENJ-USDT-SWAP"
-    },
-    "MEME": {
-        "spot": "MEME-USDT",
-        "swap": "MEME-USDT-SWAP"
-    },
-    "MOVE": {
-        "spot": "MOVE-USDT",
-        "swap": "MOVE-USDT-SWAP"
-    },
-    "NEIRO": {
-        "spot": "NEIRO-USDT",
-        "swap": "NEIRO-USDT-SWAP"
-    },
-    "FLM": {
-        "spot": "FLM-USDT",
-        "swap": "FLM-USDT-SWAP"
-    },
-    "UXLINK": {
-        "spot": "UXLINK-USDT",
-        "swap": "UXLINK-USDT-SWAP"
-    },
-    "MOVR": {
-        "spot": "MOVR-USDT",
-        "swap": "MOVR-USDT-SWAP"
-    },
-    "LUNC": {
-        "spot": "LUNC-USDT",
-        "swap": "LUNC-USDT-SWAP"
-    },
-    "TON": {
-        "spot": "TON-USDT",
-        "swap": "TON-USDT-SWAP"
-    },
-    "ICP": {
-        "spot": "ICP-USDT",
-        "swap": "ICP-USDT-SWAP"
-    },
-    "ONDO": {
-        "spot": "ONDO-USDT",
-        "swap": "ONDO-USDT-SWAP"
-    },
-    "UMA": {
-        "spot": "UMA-USDT",
-        "swap": "UMA-USDT-SWAP"
-    },
-    "HBAR": {
-        "spot": "HBAR-USDT",
-        "swap": "HBAR-USDT-SWAP"
-    },
-    "MORPHO": {
-        "spot": "MORPHO-USDT",
-        "swap": "MORPHO-USDT-SWAP"
-    },
-    "ACH": {
-        "spot": "ACH-USDT",
-        "swap": "ACH-USDT-SWAP"
-    },
-    "JTO": {
-        "spot": "JTO-USDT",
-        "swap": "JTO-USDT-SWAP"
-    },
-    "NMR": {
-        "spot": "NMR-USDT",
-        "swap": "NMR-USDT-SWAP"
-    },
-    "POL": {
-        "spot": "POL-USDT",
-        "swap": "POL-USDT-SWAP"
-    },
-    "WLD": {
-        "spot": "WLD-USDT",
-        "swap": "WLD-USDT-SWAP"
-    },
-    "PI": {
-        "spot": "PI-USDT",
-        "swap": "PI-USDT-SWAP"
-    },
-    "CORE": {
-        "spot": "CORE-USDT",
-        "swap": "CORE-USDT-SWAP"
-    },
-    "WIF": {
-        "spot": "WIF-USDT",
-        "swap": "WIF-USDT-SWAP"
-    },
-    "IOST": {
-        "spot": "IOST-USDT",
-        "swap": "IOST-USDT-SWAP"
-    },
-    "NEO": {
-        "spot": "NEO-USDT",
-        "swap": "NEO-USDT-SWAP"
-    },
-    "ONE": {
-        "spot": "ONE-USDT",
-        "swap": "ONE-USDT-SWAP"
-    },
-    "BADGER": {
-        "spot": "BADGER-USDT",
-        "swap": "BADGER-USDT-SWAP"
-    },
-    "GALA": {
-        "spot": "GALA-USDT",
-        "swap": "GALA-USDT-SWAP"
-    },
-    "LINK": {
-        "spot": "LINK-USDT",
-        "swap": "LINK-USDT-SWAP"
-    },
-    "PNUT": {
-        "spot": "PNUT-USDT",
-        "swap": "PNUT-USDT-SWAP"
-    },
-    "HUMA": {
-        "spot": "HUMA-USDT",
-        "swap": "HUMA-USDT-SWAP"
-    },
-    "CATI": {
-        "spot": "CATI-USDT",
-        "swap": "CATI-USDT-SWAP"
-    },
-    "EGLD": {
-        "spot": "EGLD-USDT",
-        "swap": "EGLD-USDT-SWAP"
-    },
-    "SUSHI": {
-        "spot": "SUSHI-USDT",
-        "swap": "SUSHI-USDT-SWAP"
-    },
-    "DOGS": {
-        "spot": "DOGS-USDT",
-        "swap": "DOGS-USDT-SWAP"
-    },
-    "LQTY": {
-        "spot": "LQTY-USDT",
-        "swap": "LQTY-USDT-SWAP"
-    },
-    "LTC": {
-        "spot": "LTC-USDT",
-        "swap": "LTC-USDT-SWAP"
-    },
-    "RENDER": {
-        "spot": "RENDER-USDT",
-        "swap": "RENDER-USDT-SWAP"
-    },
-    "BERA": {
-        "spot": "BERA-USDT",
-        "swap": "BERA-USDT-SWAP"
-    },
-    "NEAR": {
-        "spot": "NEAR-USDT",
-        "swap": "NEAR-USDT-SWAP"
+    "WAXP": {
+        "spot": "WAXP-USDT",
+        "swap": "WAXP-USDT-SWAP"
     },
     "FIL": {
         "spot": "FIL-USDT",
         "swap": "FIL-USDT-SWAP"
     },
-    "MERL": {
-        "spot": "MERL-USDT",
-        "swap": "MERL-USDT-SWAP"
+    "DGB": {
+        "spot": "DGB-USDT",
+        "swap": "DGB-USDT-SWAP"
     },
-    "ATOM": {
-        "spot": "ATOM-USDT",
-        "swap": "ATOM-USDT-SWAP"
+    "GRT": {
+        "spot": "GRT-USDT",
+        "swap": "GRT-USDT-SWAP"
     },
-    "STX": {
-        "spot": "STX-USDT",
-        "swap": "STX-USDT-SWAP"
+    "ORBS": {
+        "spot": "ORBS-USDT",
+        "swap": "ORBS-USDT-SWAP"
     },
-    "SNX": {
-        "spot": "SNX-USDT",
-        "swap": "SNX-USDT-SWAP"
+    "AEVO": {
+        "spot": "AEVO-USDT",
+        "swap": "AEVO-USDT-SWAP"
     },
-    "ZETA": {
-        "spot": "ZETA-USDT",
-        "swap": "ZETA-USDT-SWAP"
+    "GMT": {
+        "spot": "GMT-USDT",
+        "swap": "GMT-USDT-SWAP"
     },
-    "BAND": {
-        "spot": "BAND-USDT",
-        "swap": "BAND-USDT-SWAP"
+    "LQTY": {
+        "spot": "LQTY-USDT",
+        "swap": "LQTY-USDT-SWAP"
     },
-    "DOGE": {
-        "spot": "DOGE-USDT",
-        "swap": "DOGE-USDT-SWAP"
+    "W": {
+        "spot": "W-USDT",
+        "swap": "W-USDT-SWAP"
     },
-    "GOAT": {
-        "spot": "GOAT-USDT",
-        "swap": "GOAT-USDT-SWAP"
+    "MAJOR": {
+        "spot": "MAJOR-USDT",
+        "swap": "MAJOR-USDT-SWAP"
     },
-    "HMSTR": {
-        "spot": "HMSTR-USDT",
-        "swap": "HMSTR-USDT-SWAP"
+    "TRUMP": {
+        "spot": "TRUMP-USDT",
+        "swap": "TRUMP-USDT-SWAP"
     },
-    "ME": {
-        "spot": "ME-USDT",
-        "swap": "ME-USDT-SWAP"
+    "T": {
+        "spot": "T-USDT",
+        "swap": "T-USDT-SWAP"
     },
-    "PENGU": {
-        "spot": "PENGU-USDT",
-        "swap": "PENGU-USDT-SWAP"
+    "SAND": {
+        "spot": "SAND-USDT",
+        "swap": "SAND-USDT-SWAP"
     },
-    "ZK": {
-        "spot": "ZK-USDT",
-        "swap": "ZK-USDT-SWAP"
+    "ALGO": {
+        "spot": "ALGO-USDT",
+        "swap": "ALGO-USDT-SWAP"
     },
-    "CRO": {
-        "spot": "CRO-USDT",
-        "swap": "CRO-USDT-SWAP"
+    "AVAX": {
+        "spot": "AVAX-USDT",
+        "swap": "AVAX-USDT-SWAP"
     },
-    "X": {
-        "spot": "X-USDT",
-        "swap": "X-USDT-SWAP"
+    "WOO": {
+        "spot": "WOO-USDT",
+        "swap": "WOO-USDT-SWAP"
     },
-    "1INCH": {
-        "spot": "1INCH-USDT",
-        "swap": "1INCH-USDT-SWAP"
-    },
-    "ARKM": {
-        "spot": "ARKM-USDT",
-        "swap": "ARKM-USDT-SWAP"
-    },
-    "XTZ": {
-        "spot": "XTZ-USDT",
-        "swap": "XTZ-USDT-SWAP"
-    },
-    "BOME": {
-        "spot": "BOME-USDT",
-        "swap": "BOME-USDT-SWAP"
-    },
-    "VINE": {
-        "spot": "VINE-USDT",
-        "swap": "VINE-USDT-SWAP"
-    },
-    "TNSR": {
-        "spot": "TNSR-USDT",
-        "swap": "TNSR-USDT-SWAP"
-    },
-    "BABY": {
-        "spot": "BABY-USDT",
-        "swap": "BABY-USDT-SWAP"
-    },
-    "MAGIC": {
-        "spot": "MAGIC-USDT",
-        "swap": "MAGIC-USDT-SWAP"
-    },
-    "MOODENG": {
-        "spot": "MOODENG-USDT",
-        "swap": "MOODENG-USDT-SWAP"
-    },
-    "PEOPLE": {
-        "spot": "PEOPLE-USDT",
-        "swap": "PEOPLE-USDT-SWAP"
+    "ACT": {
+        "spot": "ACT-USDT",
+        "swap": "ACT-USDT-SWAP"
     },
     "THETA": {
         "spot": "THETA-USDT",
         "swap": "THETA-USDT-SWAP"
     },
-    "ETH": {
-        "spot": "ETH-USDC",
-        "swap": "ETH-USDC-SWAP"
+    "S": {
+        "spot": "S-USDT",
+        "swap": "S-USDT-SWAP"
     },
-    "PROMPT": {
-        "spot": "PROMPT-USDT",
-        "swap": "PROMPT-USDT-SWAP"
+    "FLOW": {
+        "spot": "FLOW-USDT",
+        "swap": "FLOW-USDT-SWAP"
+    },
+    "PARTI": {
+        "spot": "PARTI-USDT",
+        "swap": "PARTI-USDT-SWAP"
+    },
+    "NEO": {
+        "spot": "NEO-USDT",
+        "swap": "NEO-USDT-SWAP"
+    },
+    "ADA": {
+        "spot": "ADA-USDT",
+        "swap": "ADA-USDT-SWAP"
+    },
+    "GLM": {
+        "spot": "GLM-USDT",
+        "swap": "GLM-USDT-SWAP"
     },
     "SONIC": {
         "spot": "SONIC-USDT",
         "swap": "SONIC-USDT-SWAP"
     },
+    "TRX": {
+        "spot": "TRX-USDT",
+        "swap": "TRX-USDT-SWAP"
+    },
+    "BAT": {
+        "spot": "BAT-USDT",
+        "swap": "BAT-USDT-SWAP"
+    },
+    "ENJ": {
+        "spot": "ENJ-USDT",
+        "swap": "ENJ-USDT-SWAP"
+    },
+    "NEIRO": {
+        "spot": "NEIRO-USDT",
+        "swap": "NEIRO-USDT-SWAP"
+    },
+    "ETH": {
+        "spot": "ETH-USDT",
+        "swap": "ETH-USDT-SWAP"
+    },
+    "LOOKS": {
+        "spot": "LOOKS-USDT",
+        "swap": "LOOKS-USDT-SWAP"
+    },
+    "PYTH": {
+        "spot": "PYTH-USDT",
+        "swap": "PYTH-USDT-SWAP"
+    },
+    "STRK": {
+        "spot": "STRK-USDT",
+        "swap": "STRK-USDT-SWAP"
+    },
+    "GALA": {
+        "spot": "GALA-USDT",
+        "swap": "GALA-USDT-SWAP"
+    },
+    "FLOKI": {
+        "spot": "FLOKI-USDT",
+        "swap": "FLOKI-USDT-SWAP"
+    },
+    "COMP": {
+        "spot": "COMP-USDT",
+        "swap": "COMP-USDT-SWAP"
+    },
+    "MAGIC": {
+        "spot": "MAGIC-USDT",
+        "swap": "MAGIC-USDT-SWAP"
+    },
+    "GOAT": {
+        "spot": "GOAT-USDT",
+        "swap": "GOAT-USDT-SWAP"
+    },
+    "TURBO": {
+        "spot": "TURBO-USDT",
+        "swap": "TURBO-USDT-SWAP"
+    },
+    "JST": {
+        "spot": "JST-USDT",
+        "swap": "JST-USDT-SWAP"
+    },
+    "DOGE": {
+        "spot": "DOGE-USDT",
+        "swap": "DOGE-USDT-SWAP"
+    },
+    "A": {
+        "spot": "A-USDT",
+        "swap": "A-USDT-SWAP"
+    },
+    "CETUS": {
+        "spot": "CETUS-USDT",
+        "swap": "CETUS-USDT-SWAP"
+    },
+    "BADGER": {
+        "spot": "BADGER-USDT",
+        "swap": "BADGER-USDT-SWAP"
+    },
+    "NEAR": {
+        "spot": "NEAR-USDT",
+        "swap": "NEAR-USDT-SWAP"
+    },
     "ID": {
         "spot": "ID-USDT",
         "swap": "ID-USDT-SWAP"
     },
-    "BSV": {
-        "spot": "BSV-USDT",
-        "swap": "BSV-USDT-SWAP"
+    "PROMPT": {
+        "spot": "PROMPT-USDT",
+        "swap": "PROMPT-USDT-SWAP"
+    },
+    "SLERF": {
+        "spot": "SLERF-USDT",
+        "swap": "SLERF-USDT-SWAP"
+    },
+    "TIA": {
+        "spot": "TIA-USDT",
+        "swap": "TIA-USDT-SWAP"
+    },
+    "VINE": {
+        "spot": "VINE-USDT",
+        "swap": "VINE-USDT-SWAP"
+    },
+    "ARKM": {
+        "spot": "ARKM-USDT",
+        "swap": "ARKM-USDT-SWAP"
+    },
+    "LUNA": {
+        "spot": "LUNA-USDT",
+        "swap": "LUNA-USDT-SWAP"
+    },
+    "ZIL": {
+        "spot": "ZIL-USDT",
+        "swap": "ZIL-USDT-SWAP"
+    },
+    "POL": {
+        "spot": "POL-USDT",
+        "swap": "POL-USDT-SWAP"
+    },
+    "ANIME": {
+        "spot": "ANIME-USDT",
+        "swap": "ANIME-USDT-SWAP"
+    },
+    "CTC": {
+        "spot": "CTC-USDT",
+        "swap": "CTC-USDT-SWAP"
+    },
+    "ETHW": {
+        "spot": "ETHW-USDT",
+        "swap": "ETHW-USDT-SWAP"
+    },
+    "RVN": {
+        "spot": "RVN-USDT",
+        "swap": "RVN-USDT-SWAP"
+    },
+    "AIDOGE": {
+        "spot": "AIDOGE-USDT",
+        "swap": "AIDOGE-USDT-SWAP"
+    },
+    "BIO": {
+        "spot": "BIO-USDT",
+        "swap": "BIO-USDT-SWAP"
+    },
+    "SCR": {
+        "spot": "SCR-USDT",
+        "swap": "SCR-USDT-SWAP"
+    },
+    "BIGTIME": {
+        "spot": "BIGTIME-USDT",
+        "swap": "BIGTIME-USDT-SWAP"
+    },
+    "PRCL": {
+        "spot": "PRCL-USDT",
+        "swap": "PRCL-USDT-SWAP"
+    },
+    "ME": {
+        "spot": "ME-USDT",
+        "swap": "ME-USDT-SWAP"
+    },
+    "FXS": {
+        "spot": "FXS-USDT",
+        "swap": "FXS-USDT-SWAP"
+    },
+    "MOVE": {
+        "spot": "MOVE-USDT",
+        "swap": "MOVE-USDT-SWAP"
+    },
+    "BNB": {
+        "spot": "BNB-USDT",
+        "swap": "BNB-USDT-SWAP"
+    },
+    "BOME": {
+        "spot": "BOME-USDT",
+        "swap": "BOME-USDT-SWAP"
+    },
+    "CELO": {
+        "spot": "CELO-USDT",
+        "swap": "CELO-USDT-SWAP"
+    },
+    "JTO": {
+        "spot": "JTO-USDT",
+        "swap": "JTO-USDT-SWAP"
+    },
+    "TRB": {
+        "spot": "TRB-USDT",
+        "swap": "TRB-USDT-SWAP"
+    },
+    "HMSTR": {
+        "spot": "HMSTR-USDT",
+        "swap": "HMSTR-USDT-SWAP"
+    },
+    "HBAR": {
+        "spot": "HBAR-USDT",
+        "swap": "HBAR-USDT-SWAP"
+    },
+    "MEW": {
+        "spot": "MEW-USDT",
+        "swap": "MEW-USDT-SWAP"
+    },
+    "PNUT": {
+        "spot": "PNUT-USDT",
+        "swap": "PNUT-USDT-SWAP"
+    },
+    "KMNO": {
+        "spot": "KMNO-USDT",
+        "swap": "KMNO-USDT-SWAP"
+    },
+    "OM": {
+        "spot": "OM-USDT",
+        "swap": "OM-USDT-SWAP"
+    },
+    "UXLINK": {
+        "spot": "UXLINK-USDT",
+        "swap": "UXLINK-USDT-SWAP"
+    },
+    "AUCTION": {
+        "spot": "AUCTION-USDT",
+        "swap": "AUCTION-USDT-SWAP"
+    },
+    "SLP": {
+        "spot": "SLP-USDT",
+        "swap": "SLP-USDT-SWAP"
+    },
+    "IOTA": {
+        "spot": "IOTA-USDT",
+        "swap": "IOTA-USDT-SWAP"
+    },
+    "KSM": {
+        "spot": "KSM-USDT",
+        "swap": "KSM-USDT-SWAP"
+    },
+    "LINK": {
+        "spot": "LINK-USDT",
+        "swap": "LINK-USDT-SWAP"
+    },
+    "YFI": {
+        "spot": "YFI-USDT",
+        "swap": "YFI-USDT-SWAP"
+    },
+    "PEOPLE": {
+        "spot": "PEOPLE-USDT",
+        "swap": "PEOPLE-USDT-SWAP"
+    },
+    "EGLD": {
+        "spot": "EGLD-USDT",
+        "swap": "EGLD-USDT-SWAP"
+    },
+    "ACH": {
+        "spot": "ACH-USDT",
+        "swap": "ACH-USDT-SWAP"
+    },
+    "XLM": {
+        "spot": "XLM-USDT",
+        "swap": "XLM-USDT-SWAP"
+    },
+    "CRO": {
+        "spot": "CRO-USDT",
+        "swap": "CRO-USDT-SWAP"
+    },
+    "JUP": {
+        "spot": "JUP-USDT",
+        "swap": "JUP-USDT-SWAP"
+    },
+    "SHIB": {
+        "spot": "SHIB-USDT",
+        "swap": "SHIB-USDT-SWAP"
+    },
+    "BICO": {
+        "spot": "BICO-USDT",
+        "swap": "BICO-USDT-SWAP"
+    },
+    "CHZ": {
+        "spot": "CHZ-USDT",
+        "swap": "CHZ-USDT-SWAP"
+    },
+    "ETC": {
+        "spot": "ETC-USDT",
+        "swap": "ETC-USDT-SWAP"
+    },
+    "INJ": {
+        "spot": "INJ-USDT",
+        "swap": "INJ-USDT-SWAP"
+    },
+    "METIS": {
+        "spot": "METIS-USDT",
+        "swap": "METIS-USDT-SWAP"
+    },
+    "IMX": {
+        "spot": "IMX-USDT",
+        "swap": "IMX-USDT-SWAP"
+    },
+    "AAVE": {
+        "spot": "AAVE-USDT",
+        "swap": "AAVE-USDT-SWAP"
+    },
+    "USTC": {
+        "spot": "USTC-USDT",
+        "swap": "USTC-USDT-SWAP"
+    },
+    "ETHFI": {
+        "spot": "ETHFI-USDT",
+        "swap": "ETHFI-USDT-SWAP"
+    },
+    "LUNC": {
+        "spot": "LUNC-USDT",
+        "swap": "LUNC-USDT-SWAP"
+    },
+    "XRP": {
+        "spot": "XRP-USDT",
+        "swap": "XRP-USDT-SWAP"
+    },
+    "CVX": {
+        "spot": "CVX-USDT",
+        "swap": "CVX-USDT-SWAP"
+    },
+    "NC": {
+        "spot": "NC-USDT",
+        "swap": "NC-USDT-SWAP"
+    },
+    "FLM": {
+        "spot": "FLM-USDT",
+        "swap": "FLM-USDT-SWAP"
+    },
+    "ONT": {
+        "spot": "ONT-USDT",
+        "swap": "ONT-USDT-SWAP"
+    },
+    "MORPHO": {
+        "spot": "MORPHO-USDT",
+        "swap": "MORPHO-USDT-SWAP"
+    },
+    "KNC": {
+        "spot": "KNC-USDT",
+        "swap": "KNC-USDT-SWAP"
+    },
+    "ZENT": {
+        "spot": "ZENT-USDT",
+        "swap": "ZENT-USDT-SWAP"
+    },
+    "API3": {
+        "spot": "API3-USDT",
+        "swap": "API3-USDT-SWAP"
+    },
+    "IOST": {
+        "spot": "IOST-USDT",
+        "swap": "IOST-USDT-SWAP"
+    },
+    "MKR": {
+        "spot": "MKR-USDT",
+        "swap": "MKR-USDT-SWAP"
+    },
+    "LAYER": {
+        "spot": "LAYER-USDT",
+        "swap": "LAYER-USDT-SWAP"
+    },
+    "ZRX": {
+        "spot": "ZRX-USDT",
+        "swap": "ZRX-USDT-SWAP"
+    },
+    "LDO": {
+        "spot": "LDO-USDT",
+        "swap": "LDO-USDT-SWAP"
+    },
+    "PI": {
+        "spot": "PI-USDT",
+        "swap": "PI-USDT-SWAP"
+    },
+    "NMR": {
+        "spot": "NMR-USDT",
+        "swap": "NMR-USDT-SWAP"
+    },
+    "TON": {
+        "spot": "TON-USDT",
+        "swap": "TON-USDT-SWAP"
+    },
+    "ACE": {
+        "spot": "ACE-USDT",
+        "swap": "ACE-USDT-SWAP"
+    },
+    "OL": {
+        "spot": "OL-USDT",
+        "swap": "OL-USDT-SWAP"
+    },
+    "APE": {
+        "spot": "APE-USDT",
+        "swap": "APE-USDT-SWAP"
+    },
+    "ALPHA": {
+        "spot": "ALPHA-USDT",
+        "swap": "ALPHA-USDT-SWAP"
+    },
+    "SOL": {
+        "spot": "SOL-USDT",
+        "swap": "SOL-USDT-SWAP"
+    },
+    "AXS": {
+        "spot": "AXS-USDT",
+        "swap": "AXS-USDT-SWAP"
+    },
+    "CAT": {
+        "spot": "CAT-USDT",
+        "swap": "CAT-USDT-SWAP"
+    },
+    "ICX": {
+        "spot": "ICX-USDT",
+        "swap": "ICX-USDT-SWAP"
+    },
+    "MASK": {
+        "spot": "MASK-USDT",
+        "swap": "MASK-USDT-SWAP"
+    },
+    "NOT": {
+        "spot": "NOT-USDT",
+        "swap": "NOT-USDT-SWAP"
+    },
+    "STX": {
+        "spot": "STX-USDT",
+        "swap": "STX-USDT-SWAP"
+    },
+    "IP": {
+        "spot": "IP-USDT",
+        "swap": "IP-USDT-SWAP"
+    },
+    "JOE": {
+        "spot": "JOE-USDT",
+        "swap": "JOE-USDT-SWAP"
+    },
+    "ZRO": {
+        "spot": "ZRO-USDT",
+        "swap": "ZRO-USDT-SWAP"
+    },
+    "ARB": {
+        "spot": "ARB-USDT",
+        "swap": "ARB-USDT-SWAP"
+    },
+    "BERA": {
+        "spot": "BERA-USDT",
+        "swap": "BERA-USDT-SWAP"
+    },
+    "ZK": {
+        "spot": "ZK-USDT",
+        "swap": "ZK-USDT-SWAP"
+    },
+    "BCH": {
+        "spot": "BCH-USDT",
+        "swap": "BCH-USDT-SWAP"
+    },
+    "PERP": {
+        "spot": "PERP-USDT",
+        "swap": "PERP-USDT-SWAP"
+    },
+    "XTZ": {
+        "spot": "XTZ-USDT",
+        "swap": "XTZ-USDT-SWAP"
+    },
+    "XAUT": {
+        "spot": "XAUT-USDT",
+        "swap": "XAUT-USDT-SWAP"
+    },
+    "CORE": {
+        "spot": "CORE-USDT",
+        "swap": "CORE-USDT-SWAP"
+    },
+    "ONE": {
+        "spot": "ONE-USDT",
+        "swap": "ONE-USDT-SWAP"
+    },
+    "SATS": {
+        "spot": "SATS-USDT",
+        "swap": "SATS-USDT-SWAP"
+    },
+    "ATH": {
+        "spot": "ATH-USDT",
+        "swap": "ATH-USDT-SWAP"
     },
     "CFX": {
         "spot": "CFX-USDT",
         "swap": "CFX-USDT-SWAP"
+    },
+    "CATI": {
+        "spot": "CATI-USDT",
+        "swap": "CATI-USDT-SWAP"
+    },
+    "ONDO": {
+        "spot": "ONDO-USDT",
+        "swap": "ONDO-USDT-SWAP"
+    },
+    "SNX": {
+        "spot": "SNX-USDT",
+        "swap": "SNX-USDT-SWAP"
+    },
+    "STORJ": {
+        "spot": "STORJ-USDT",
+        "swap": "STORJ-USDT-SWAP"
+    },
+    "WLD": {
+        "spot": "WLD-USDT",
+        "swap": "WLD-USDT-SWAP"
+    },
+    "EIGEN": {
+        "spot": "EIGEN-USDT",
+        "swap": "EIGEN-USDT-SWAP"
+    },
+    "DOT": {
+        "spot": "DOT-USDT",
+        "swap": "DOT-USDT-SWAP"
+    },
+    "BAND": {
+        "spot": "BAND-USDT",
+        "swap": "BAND-USDT-SWAP"
+    },
+    "CVC": {
+        "spot": "CVC-USDT",
+        "swap": "CVC-USDT-SWAP"
+    },
+    "RDNT": {
+        "spot": "RDNT-USDT",
+        "swap": "RDNT-USDT-SWAP"
+    },
+    "WIF": {
+        "spot": "WIF-USDT",
+        "swap": "WIF-USDT-SWAP"
+    },
+    "SOPH": {
+        "spot": "SOPH-USDT",
+        "swap": "SOPH-USDT-SWAP"
+    },
+    "SUI": {
+        "spot": "SUI-USDT",
+        "swap": "SUI-USDT-SWAP"
+    },
+    "LPT": {
+        "spot": "LPT-USDT",
+        "swap": "LPT-USDT-SWAP"
+    },
+    "SUSHI": {
+        "spot": "SUSHI-USDT",
+        "swap": "SUSHI-USDT-SWAP"
+    },
+    "LRC": {
+        "spot": "LRC-USDT",
+        "swap": "LRC-USDT-SWAP"
+    },
+    "RAY": {
+        "spot": "RAY-USDT",
+        "swap": "RAY-USDT-SWAP"
+    },
+    "RENDER": {
+        "spot": "RENDER-USDT",
+        "swap": "RENDER-USDT-SWAP"
+    },
+    "BNT": {
+        "spot": "BNT-USDT",
+        "swap": "BNT-USDT-SWAP"
+    },
+    "AR": {
+        "spot": "AR-USDT",
+        "swap": "AR-USDT-SWAP"
+    },
+    "TNSR": {
+        "spot": "TNSR-USDT",
+        "swap": "TNSR-USDT-SWAP"
+    },
+    "AGLD": {
+        "spot": "AGLD-USDT",
+        "swap": "AGLD-USDT-SWAP"
+    },
+    "CRV": {
+        "spot": "CRV-USDT",
+        "swap": "CRV-USDT-SWAP"
+    },
+    "MANA": {
+        "spot": "MANA-USDT",
+        "swap": "MANA-USDT-SWAP"
+    },
+    "DOGS": {
+        "spot": "DOGS-USDT",
+        "swap": "DOGS-USDT-SWAP"
+    },
+    "PEPE": {
+        "spot": "PEPE-USDT",
+        "swap": "PEPE-USDT-SWAP"
+    },
+    "ATOM": {
+        "spot": "ATOM-USDT",
+        "swap": "ATOM-USDT-SWAP"
+    },
+    "LTC": {
+        "spot": "LTC-USDT",
+        "swap": "LTC-USDT-SWAP"
+    },
+    "MEME": {
+        "spot": "MEME-USDT",
+        "swap": "MEME-USDT-SWAP"
+    },
+    "UNI": {
+        "spot": "UNI-USDT",
+        "swap": "UNI-USDT-SWAP"
+    },
+    "BONK": {
+        "spot": "BONK-USDT",
+        "swap": "BONK-USDT-SWAP"
+    },
+    "DEGEN": {
+        "spot": "DEGEN-USDT",
+        "swap": "DEGEN-USDT-SWAP"
+    },
+    "ZETA": {
+        "spot": "ZETA-USDT",
+        "swap": "ZETA-USDT-SWAP"
+    },
+    "HUMA": {
+        "spot": "HUMA-USDT",
+        "swap": "HUMA-USDT-SWAP"
+    },
+    "UMA": {
+        "spot": "UMA-USDT",
+        "swap": "UMA-USDT-SWAP"
+    },
+    "BLUR": {
+        "spot": "BLUR-USDT",
+        "swap": "BLUR-USDT-SWAP"
+    },
+    "GMX": {
+        "spot": "GMX-USDT",
+        "swap": "GMX-USDT-SWAP"
+    },
+    "WCT": {
+        "spot": "WCT-USDT",
+        "swap": "WCT-USDT-SWAP"
+    },
+    "GAS": {
+        "spot": "GAS-USDT",
+        "swap": "GAS-USDT-SWAP"
+    },
+    "BTC": {
+        "spot": "BTC-USDT",
+        "swap": "BTC-USDT-SWAP"
+    },
+    "GODS": {
+        "spot": "GODS-USDT",
+        "swap": "GODS-USDT-SWAP"
+    },
+    "DYDX": {
+        "spot": "DYDX-USDT",
+        "swap": "DYDX-USDT-SWAP"
+    },
+    "MINA": {
+        "spot": "MINA-USDT",
+        "swap": "MINA-USDT-SWAP"
+    },
+    "RSR": {
+        "spot": "RSR-USDT",
+        "swap": "RSR-USDT-SWAP"
+    },
+    "SSV": {
+        "spot": "SSV-USDT",
+        "swap": "SSV-USDT-SWAP"
+    },
+    "BABY": {
+        "spot": "BABY-USDT",
+        "swap": "BABY-USDT-SWAP"
+    },
+    "YGG": {
+        "spot": "YGG-USDT",
+        "swap": "YGG-USDT-SWAP"
+    },
+    "KAITO": {
+        "spot": "KAITO-USDT",
+        "swap": "KAITO-USDT-SWAP"
+    },
+    "MOODENG": {
+        "spot": "MOODENG-USDT",
+        "swap": "MOODENG-USDT-SWAP"
+    },
+    "DUCK": {
+        "spot": "DUCK-USDT",
+        "swap": "DUCK-USDT-SWAP"
+    },
+    "1INCH": {
+        "spot": "1INCH-USDT",
+        "swap": "1INCH-USDT-SWAP"
+    },
+    "CSPR": {
+        "spot": "CSPR-USDT",
+        "swap": "CSPR-USDT-SWAP"
+    },
+    "ICP": {
+        "spot": "ICP-USDT",
+        "swap": "ICP-USDT-SWAP"
+    },
+    "MERL": {
+        "spot": "MERL-USDT",
+        "swap": "MERL-USDT-SWAP"
+    },
+    "AIXBT": {
+        "spot": "AIXBT-USDT",
+        "swap": "AIXBT-USDT-SWAP"
+    },
+    "X": {
+        "spot": "X-USDT",
+        "swap": "X-USDT-SWAP"
+    },
+    "PENGU": {
+        "spot": "PENGU-USDT",
+        "swap": "PENGU-USDT-SWAP"
+    },
+    "BAL": {
+        "spot": "BAL-USDT",
+        "swap": "BAL-USDT-SWAP"
+    },
+    "ENS": {
+        "spot": "ENS-USDT",
+        "swap": "ENS-USDT-SWAP"
     }
 }
