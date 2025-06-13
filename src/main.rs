@@ -20,10 +20,6 @@ use utils::{get_timestamp, read_symbols};
 /*
  * importing okx rust API
  */
-use okx_rs::api::{Production, OKXEnv};
-use okx_rs::api::v5::BalanceAndPositionChannel;
-use okx_rs::api::Options;
-use okx_rs::websocket::OKXAuth;
 use okx_rs::websocket::WebsocketChannel;
 use okx_rs::websocket::conn::Order;
 
@@ -33,13 +29,13 @@ use okx_rs::websocket::conn::Order;
 use dotenv; //env loader
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{Value};
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use tokio_tungstenite:: tungstenite::protocol::Message;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, timeout, Duration};
 use log4rs::init_file;
 use log::*;
 
-use crate::okx_client::{connect_okx_order_info, connect_okx_books5, connect_okx_books_tbt};
+use crate::okx_client::{connect_okx_account, connect_okx_books5, connect_okx_books_tbt, connect_okx_order, connect_okx_order_info};
 
 #[tokio::main]
 async fn main() {
@@ -106,41 +102,59 @@ async fn main() {
     /*
      * A private websocket channel initialization for account info
      */
-    let mut options_private = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
-    let (mut client_private, mut response_private) = connect_async(Production.private_websocket()).await.unwrap();
-    let (mut write_private, mut read_private) = client_private.split();
-    let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
-    write_private.send(auth_msg_private.into()).await.unwrap();
-    let auth_resp_private = read_private.next().await.unwrap();
-    println!("A private websocket channel auth: {:?}", auth_resp_private);
-    let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
     let account_channel_handle = tokio::spawn(async move {
+        let (mut write_private, mut read_private) = connect_okx_account(key.clone(), secret.clone(), passphrase.clone()).await;
+        let mut alive_interval = tokio::time::interval(Duration::from_secs(*PING_TIMEOUT));
         loop {
-            let msg = read_private.next().await.unwrap();
-            let parsed_msg: Value = match msg {
-                Ok(msg) => {
-                    let json_str = if let Message::Text(txt) = msg {
-                        txt
-                    } else {
-                        panic!("BalanceAndPositionChannel expected a text message, {}", msg)
-                    };
-                    if json_str == "pong" {
-                        println!("BalanceAndPositionChannel received a pong message, Alive!");
-                        continue;
+            tokio::select! {
+                msg = timeout(Duration::from_secs(*PING_TIMEOUT), read_private.next()) => {
+                    match msg {
+                        Ok(Some(Ok(ws_msg))) => {
+                            match ws_msg {
+                                Message::Text(text) => {
+                                    if text == "pong" {
+                                        println!("Account Channel received a pong message, Alive!");
+                                        continue;
+                                    }
+                                    let parsed_msg: Value = serde_json::from_str(&text).expect("Failed to parse JSON");
+                                    let channel: String = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
+                                    let data = &parsed_msg["data"];
+                                    if data.is_null() {
+                                        info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", parsed_msg);
+                                    } else {
+                                        if channel == "balance_and_position" {
+                                            process_account_message(data).await;
+                                        } else {
+                                            panic!("Receiving unknown channel msg from private websocket balance_and_position channel {:?}", parsed_msg);
+                                        }
+                                    }
+                                }
+                                other => {
+                                    info!("Account channel Received non-text WebSocket message: {:?}", other);
+                                    (write_private, read_private) = connect_okx_account(key.clone(), secret.clone(), passphrase.clone()).await;
+                                }
+                            }
+                        }
+                        Ok(Some(Err(e))) => {
+                            info!("Account WebSocket error: {:?}", e);
+                            (write_private, read_private) = connect_okx_account(key.clone(), secret.clone(), passphrase.clone()).await;
+                        }
+                        Ok(None) => {
+                            info!("OrdersInfoChannel Recv Channel: return None, the receiver has been closed.");
+                            (write_private, read_private) = connect_okx_account(key.clone(), secret.clone(), passphrase.clone()).await;
+                        }
+                        Err(_) => {
+                            println!("Account Recv Channel: No msgs received for {} seconds, ping it", *PING_TIMEOUT);
+                            let _ = write_private.send("ping".into()).await;
+                        }              
                     }
-                    serde_json::from_str(&json_str).expect("Failed to parse JSON")
                 }
-                Err(error_msg) => panic!("Error receiving message {}", error_msg),
-            };
-            let channel: String = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
-            let data = &parsed_msg["data"];
-            if data.is_null() {
-                info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", parsed_msg);
-            } else {
-                if channel == "balance_and_position" {
-                    process_account_message(data).await;
-                } else {
-                    panic!("Receiving unknown channel msg from private websocket balance_and_position channel {:?}", parsed_msg);
+                _ = alive_interval.tick() => {
+                    println!("Account Recv Channel Timeout, sending ping message.");
+                    let _ = write_private.send("ping".into()).await;
+                }
+                else => {
+                    info!("Account not match");
                 }
             }
         }
@@ -150,7 +164,6 @@ async fn main() {
      * 查询订单信息WebSocket
      * A private websocket channel initialization for orders info
      */
-    
     let orders_info_channel_handle = tokio::spawn(async move {
         let (mut write_order_info, mut read_order_info) = connect_okx_order_info(key.clone(), secret.clone(), passphrase.clone(), spot_inst_ids.clone(), swap_inst_ids.clone()).await;
         let mut alive_interval = tokio::time::interval(Duration::from_secs(*PING_TIMEOUT));
@@ -216,7 +229,6 @@ async fn main() {
             }
         }
     });
-
 
     /*
      * 查询instruments信息Rest
@@ -357,7 +369,6 @@ async fn main() {
             }
     });
 
-
     /*
      * Compute Engine
      * Receiving msgs from books/instruments thread
@@ -395,82 +406,66 @@ async fn main() {
         }
             
     });
-
-    /*
-     * 下单WebSocket
-     * A private websocket channel initialization for order
-     */
-    let mut options_order = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
-    let (mut client_order, mut response_order) = connect_async(Production.private_websocket()).await.unwrap();
-    let (mut write_order, mut read_order) = client_order.split();
-    let auth_msg_order = OKXAuth::ws_auth(options_order).unwrap();
-    write_order.send(auth_msg_order.into()).await.unwrap();    
-    let auth_resp_order = read_order.next().await.unwrap();
-    println!("A private order websocket channel auth: {:?}", auth_resp_order);
-
+    
     /*
      * Order Engine
      * Processing order request from compute engine
      */
     let order_handle = tokio::spawn(async move {
-        loop {
-            // Use `timeout` to wait for a message or timeout after 20 seconds
-            let msg = timeout(Duration::from_secs(*PING_TIMEOUT), rx_order.recv()).await;
-            match msg {
-                Ok(Some(msg)) => {
-                    let order_spot = msg.0;
-                    let order_swap = msg.1;
-                    {
-                        let inst_state_map = INST_STATE_MAP.read().await;
-                        if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) || inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())) {
-                            info!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
-                            continue;
-                        }
-                    }
-    
-                    // info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
-    
-                    {
-                        let mut inst_state_map = INST_STATE_MAP.write().await;
-                        inst_state_map.insert(order_spot.clone().inst_id.to_string(), order_spot.clone().id);
-                        inst_state_map.insert(order_swap.clone().inst_id.to_string(), order_swap.clone().id);
-    
-                        let mut orderid2inst = ORDERID2INST.write().await;
-                        orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
-                        orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
-    
-                        // info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
-                    }
-                    info!("<<<<<<<processing spot and swap order: spot_client_id: {:?}, swap_client_id: {:?}", 
-                        order_spot.clone().id, order_swap.clone().id);
-                    info!("<<<<<<<send order_spot: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
-                        order_spot.clone().id, order_spot.clone().inst_id, order_spot.clone().sz, order_spot.clone().price, get_timestamp(), order_spot.clone().threshold);
-                    let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
-                    info!("<<<<<<<send order_swap: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
-                        order_swap.clone().id, order_swap.clone().inst_id, order_swap.clone().sz, order_swap.clone().price, get_timestamp(), order_swap.clone().threshold);
-                    let _ = write_order.send(order_swap.clone().subscribe_message().into()).await;
-                    //let _ = write_order.send("ping".into()).await; //TODO: remove later
-                },
-                Ok(None) => {
-                    // This means `rx_order.recv()` returned `None`, i.e., the receiver has been closed.
-                    panic!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
-                },
-                Err(_) => {
-                    // Timeout happened after 20 seconds
-                    println!("$$$$$$$$$$$$$$Order Engine: No order received for {} seconds, sending ping message.", *PING_TIMEOUT);
-                    let _ = write_order.send("ping".into()).await;
-                },
-            }
-        }
-    });
-    
-
-    let order_recv_handle = tokio::spawn(async move {
-        // Create a 20-second interval timer
+        let (mut write_order, mut read_order) = connect_okx_order(key.clone(), secret.clone(), passphrase.clone()).await;
         let mut alive_interval = tokio::time::interval(Duration::from_secs(*PING_TIMEOUT));
-
         loop {
             tokio::select! {
+                // Use `timeout` to wait for a message or timeout after 20 seconds
+                msg = timeout(Duration::from_secs(*PING_TIMEOUT), rx_order.recv())=> {
+                    match msg {
+                        Ok(Some(msg)) => {
+                            let order_spot = msg.0;
+                            let order_swap = msg.1;
+                            {
+                                let inst_state_map = INST_STATE_MAP.read().await;
+                                if inst_state_map.contains_key(&(order_spot.clone().inst_id.to_string())) || inst_state_map.contains_key(&(order_swap.clone().inst_id.to_string())) {
+                                    info!("$$$$$$$$$$$$$$Skipping this inst_id in order_handle{:?} {:?}", order_spot.inst_id.to_string(), inst_state_map);
+                                    continue;
+                                }
+                            }
+            
+                            // info!("$$$$$$$$$$$$$$$Order Engine: recv order_spot is {:?}, order_swap is {:?}", order_spot.clone(), order_swap);
+            
+                            {
+                                let mut inst_state_map = INST_STATE_MAP.write().await;
+                                inst_state_map.insert(order_spot.clone().inst_id.to_string(), order_spot.clone().id);
+                                inst_state_map.insert(order_swap.clone().inst_id.to_string(), order_swap.clone().id);
+            
+                                let mut orderid2inst = ORDERID2INST.write().await;
+                                orderid2inst.insert(order_spot.clone().id, order_spot.clone().inst_id.to_string());
+                                orderid2inst.insert(order_swap.clone().id, order_swap.clone().inst_id.to_string());
+            
+                                // info!("$$$$$$$$$$$$$$Update global set {:?} {:?} 开始下单", inst_state_map, orderid2inst);
+                            }
+                            info!("<<<<<<<processing spot and swap order: spot_client_id: {:?}, swap_client_id: {:?}", 
+                                order_spot.clone().id, order_swap.clone().id);
+                            info!("<<<<<<<send order_spot: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
+                                order_spot.clone().id, order_spot.clone().inst_id, order_spot.clone().sz, order_spot.clone().price, get_timestamp(), order_spot.clone().threshold);
+                            let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
+                            info!("<<<<<<<send order_swap: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
+                                order_swap.clone().id, order_swap.clone().inst_id, order_swap.clone().sz, order_swap.clone().price, get_timestamp(), order_swap.clone().threshold);
+                            let order_swap_info = order_swap.clone().subscribe_message().into();
+                            // info!("[DEBUG] {}", order_swap_info);
+                            let _ = write_order.send(order_swap_info).await;
+                            //let _ = write_order.send("ping".into()).await; //TODO: remove later
+                        },
+                        Ok(None) => {
+                            // This means `rx_order.recv()` returned `None`, i.e., the receiver has been closed.
+                            panic!("$$$$$$$$$$$$$$ rx_order return None, the receiver has been closed.");
+                        },
+                        Err(_) => {
+                            // Timeout happened after 20 seconds
+                            println!("$$$$$$$$$$$$$$Order Engine: No order received for {} seconds, sending ping message.", *PING_TIMEOUT);
+                            let _ = write_order.send("ping".into()).await;
+                        },
+                    }
+                }
                 msg = timeout(Duration::from_secs(*PING_TIMEOUT), read_order.next()) => {
                     match msg {
                         Ok(Some(Ok(ws_msg))) => {
@@ -484,8 +479,9 @@ async fn main() {
                                     let clientId = &parsed_msg["id"];
                                     let ts = &parsed_msg["data"][0]["ts"];
                                     let orderId = &parsed_msg["data"][0]["ordId"];
-                                    info!("<<<<<<<Order successfully placed: clientId: {}, ts: {}, orderId: {}", 
-                                        clientId, ts, orderId);
+                                    info!("<<<<<<<Order successfully placed: clientId: {}, ts: {}, orderId: {}, msg is {}", 
+                                        clientId, ts, orderId, &parsed_msg["data"][0]["sMsg"]);
+                                    // info!("[DEBUG] msg is {}", parsed_msg);
                                     info!("$$$$$$$$$$$$$$Order Channel: recv order msg: {:?}", parsed_msg);
                                     {
                                         let orderid2inst = ORDERID2INST.read().await;
@@ -498,18 +494,22 @@ async fn main() {
                                     }
                                 }
                                 other => {
-                                    panic!("Received non-text WebSocket message: {:?}", other);
+                                    info!("$$$$$$$$$$$$$$ Order Recv Channel: received non-text WebSocket message: {:?}", other);
+                                    (write_order, read_order) = connect_okx_order(key.clone(), secret.clone(), passphrase.clone()).await;
                                 }
                             }
                         }
                         Ok(Some(Err(e))) => {
-                            panic!("WebSocket error: {:?}", e);
+                            info!("$$$$$$$$$$$$$$ Order Recv Channel: WebSocket error: {:?}", e);
+                            (write_order, read_order) = connect_okx_order(key.clone(), secret.clone(), passphrase.clone()).await;
                         }
                         Ok(None) => {
-                            panic!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
+                            info!("$$$$$$$$$$$$$$ Order Recv Channel: return None, the receiver has been closed.");
+                            (write_order, read_order) = connect_okx_order(key.clone(), secret.clone(), passphrase.clone()).await;
                         }
                         Err(_) => {
-                            println!("$$$$$$$$$$$$$$ Order Recv Channel: No order received for 20 seconds.");
+                            info!("$$$$$$$$$$$$$$ Order Recv Channel: No order received for timeout, ping");
+                            let _ = write_order.send("ping".into()).await;
                         }
                     }
                 }
@@ -520,27 +520,12 @@ async fn main() {
         }
     });
 
-
-
-    /*
-     * Timeout Control to ping each ws
-     */
-    let ping_handle = tokio::spawn(async move {
-        loop {
-            let _ = write_private.send("ping".into()).await;
-            sleep(Duration::from_secs(*PING_TIMEOUT)).await;
-        }
-       
-    });
-
     books5_channel_handle.await.unwrap();
     books_tbt_channel_handle.await.unwrap();
     compute_handle.await.unwrap();
     account_channel_handle.await.unwrap();
     order_handle.await.unwrap();
-    order_recv_handle.await.unwrap();
     orders_info_channel_handle.await.unwrap();
-    ping_handle.await.unwrap();
     redis_handle.await.unwrap();
 }
 

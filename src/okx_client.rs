@@ -3,6 +3,7 @@ use futures_util::stream::SplitStream;
 use futures_util::StreamExt;
 use futures_util::SinkExt;
 use log::info;
+use okx_rs::api::v5::BalanceAndPositionChannel;
 use okx_rs::api::{Production, OKXEnv};
 use okx_rs::api::v5::{InstrumentType, OrdersInfoChannel};
 use okx_rs::api::Options;
@@ -50,7 +51,6 @@ pub async fn connect_okx_books5(key: String, secret: String, passphrase: String,
     let auth_msg_books5 = OKXAuth::ws_auth(options_books5).unwrap();
     write_books5.send(auth_msg_books5.into()).await.unwrap();    
     let auth_resp_books5 = read_books5.next().await.unwrap();
-    println!("A public websocket books5 channel auth: {:?}", auth_resp_books5);
     for inst_id in spot_inst_ids.clone() { 
         let books = Books5 {
             inst_id: String::from(inst_id),
@@ -98,4 +98,27 @@ pub async fn connect_okx_books_tbt(key: String, secret: String, passphrase: Stri
     }
     info!("Connecting or Reconnecting to OKX books_tbt websocket channel.");
     (write_books_tbt, read_books_tbt)
+}
+
+pub async fn connect_okx_order(key: String, secret: String, passphrase: String) -> (SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
+    let mut options_order = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
+    let (mut client_order, mut response_order) = connect_async(Production.private_websocket()).await.unwrap();
+    let (mut write_order, mut read_order) = client_order.split();
+    let auth_msg_order = OKXAuth::ws_auth(options_order).unwrap();
+    write_order.send(auth_msg_order.into()).await.unwrap();    
+    let auth_resp_order = read_order.next().await.unwrap();
+    info!("Connecting or Reconnecting to OKX order websocket channel.");
+    (write_order, read_order)
+}
+
+pub async fn connect_okx_account(key: String, secret: String, passphrase: String) -> (SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
+    let mut options_private = Options::new_with(Production, key.clone(), secret.clone(), passphrase.clone());
+    let (mut client_private, mut response_private) = connect_async(Production.private_websocket()).await.unwrap();
+    let (mut write_private, mut read_private) = client_private.split();
+    let auth_msg_private = OKXAuth::ws_auth(options_private).unwrap();
+    write_private.send(auth_msg_private.into()).await.unwrap();
+    let auth_resp_private = read_private.next().await.unwrap();
+    let _ = write_private.send(BalanceAndPositionChannel.subscribe_message().into()).await;
+    info!("Connecting or Reconnecting to OKX account websocket channel.");
+    (write_private, read_private)
 }

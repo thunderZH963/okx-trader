@@ -28,14 +28,22 @@ pub async fn process_account_message(data: &Value) {
     for json_item in data[0]["balData"].as_array().unwrap_or(&vec![]) {
         match Decimal::from_str(json_item["cashBal"].as_str().unwrap()) {
             Ok(decimal_value) => {
-                ccy2bal.insert(json_item["ccy"].as_str().unwrap().to_string(), decimal_value);
-                info!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", json_item["ccy"].to_string(), decimal_value);
+                let mut tmp = json_item["ccy"].as_str().unwrap().to_string();
+                if tmp == "USDT" {
+                    info!("Account Message Updater: USDT cashBal is {:?}", decimal_value);
+                    ccy2bal.insert(tmp.clone(), decimal_value);
+                } else {
+                    tmp = tmp + "-USDT";
+                    ccy2bal.insert(tmp.clone(), decimal_value);
+                    info!("Account Message Updater: ccy {:?} and cashBal {:?} are inserted", tmp.clone(), decimal_value);
+                }
             }
             Err(e) => {
                 info!("Account Message Updater: Error converting cashBal to Decimal: {}", e);
             }
         }
     }
+    println!("{}", data[0]["posData"]);
     for json_item in data[0]["posData"].as_array().unwrap_or(&vec![]) {
         match Decimal::from_str(json_item["pos"].as_str().unwrap()) {
             Ok(decimal_value) => {
@@ -88,10 +96,26 @@ pub async fn process_books5_message(inst_id: String, data: &Value) {
     let mut depth_map = DEPTH_MAP_Books5.lock().await;
     depth_map.insert(inst_id.clone(), (res_ask.clone(), res_bid.clone()));
     let mut inst2bestbid = INST2BESTBID_DEPTH.lock().await;
-    inst2bestbid.insert(inst_id.clone(), res_bid.clone().get(0).unwrap().clone());
+    match res_bid.clone().get(0) {
+        Some(bid) => {
+            inst2bestbid.insert(inst_id.clone(), bid.clone());
+        },
+        None => {
+            println!("Error: No bid found {}", data);
+        },
+    }
 
     let mut inst2bestask = INST2BESTASK_DEPTH.lock().await;
-    inst2bestask.insert(inst_id.clone(), res_ask.clone().get(0).unwrap().clone());
+    // inst2bestask.insert(inst_id.clone(), res_ask.clone().get(0).unwrap().clone());
+    match res_ask.clone().get(0) {
+        Some(ask) => {
+            inst2bestask.insert(inst_id.clone(), ask.clone());
+        },
+        None => {
+            println!("Error: No ask found {}", data);
+        },
+    }
+
     // info!("BOOKS5 update inst_id {:?},  inst2bestbid{:?} and inst2bestask", inst2bestbid, inst2bestask);
 }
 
