@@ -96,6 +96,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         let mut balance_usdt = Decimal::new(0, 0);
         let mut position_swap = Decimal::new(0, 0);
         let mut position_spot = Decimal::new(0, 0);
+        let mut true_position_spot = Decimal::new(0, 0);
         let mut swap_ctval = Decimal::new(0, 0);
         {
             let mut inst2lotsz = INST2LOTSZ.lock().await;
@@ -113,11 +114,12 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             let ccy2bal = CCY2BAL.lock().await;
             balance_usdt = ccy2bal.get("USDT").unwrap_or(&Decimal::zero()).clone();
             position_swap = ccy2bal.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
-            position_spot = position_swap * swap_ctval * Decimal::from(-1);
+            let true_position_spot = ccy2bal.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
+            position_spot = (position_swap * swap_ctval).abs().min(true_position_spot.abs());
         }
         let is_open = orderbook.operation_type == OperationType::Open2;
         let is_close = !is_open;
-        let mut constraint_percent_qty = 0.2;
+        let mut constraint_percent_qty = 0.5;
         if let Some(caution) = threshold_2_caution { //0/1, if 1: 谨慎策略
             if caution > 0.0 {
                 constraint_percent_qty = 0.1
@@ -125,8 +127,8 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         };
         
         
-        info!("###############Signal {:?} Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_swap is {:?}, position_spot is {:?} and constraint_percent_qty is {:?}", 
-                                                         is_open, spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_swap, position_spot, constraint_percent_qty);
+        info!("###############Signal {:?} Basic Order Para Calculator: spot_inst_id is {:?}, spot_lot_sz is {:?}, swap_lot_sz is {:?}, lot_sz is {:?}, spot_min_sz is {:?}, swap_min_sz is {:?}, swap_ct_val is {:?}, balance_usdt is {:?}, position_swap is {:?}, position_spot is {:?}, true_posision_spot is {:?} and constraint_percent_qty is {:?}", 
+                                                         is_open, spot_inst_id, spot_lot_size, swap_lot_size, lot_size, spot_min_size, swap_min_size, swap_ctval, balance_usdt, position_swap, position_spot, true_position_spot, constraint_percent_qty);
         
         /*
             * Get basis trade qty
@@ -316,13 +318,18 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             };
             return Some((order_spot, order_swap));
         } else {
+            let mut trade_qty_spot = trade_qty_decimal;
+            if trade_qty_spot > position_spot {
+                trade_qty_spot = (position_spot / lot_size).floor() * lot_size;
+                info!("re-adjust trade_qty_spot to position_spot");
+            }
             let order_spot = Order {
                 id: spot_generate_client_order_id(&OperationType::Close2, &nanoid),
                 side: "sell".to_string(),
                 inst_id: spot_inst_id,
                 tdMode: "cross".to_string(),
                 ordType: "market".to_string(),
-                sz: trade_qty_decimal.to_string(),
+                sz: trade_qty_spot.to_string(),
                 tgtCcy: "0".to_string(),
                 reduceOnly: "0".to_string(),
                 price: unit_price_spot.to_string(),

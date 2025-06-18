@@ -1,8 +1,12 @@
+use futures_util::StreamExt;
 use serde_json::{Value};
+use tokio_tungstenite::tungstenite::Message;
 use crate::globals::*;
+use crate::okx_client::connect_okx_account;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
 use log::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub async fn process_instruments_message(data: &Value, spot_inst_ids: Vec<&str>) {
     let mut inst2lotsz = INST2LOTSZ.lock().await;
@@ -43,7 +47,6 @@ pub async fn process_account_message(data: &Value) {
             }
         }
     }
-    println!("{}", data[0]["posData"]);
     for json_item in data[0]["posData"].as_array().unwrap_or(&vec![]) {
         match Decimal::from_str(json_item["pos"].as_str().unwrap()) {
             Ok(decimal_value) => {
@@ -151,4 +154,27 @@ pub async fn process_bbotbt_message(inst_id: String, data: &Value) {
     // info!("BOOKS TBT update inst_id {:?},  inst2bestbid {:?} and inst2bestask {:?}", inst_id, inst2bestbid, inst2bestask);
 
 }
+
+// #[tokio::test]
+// async fn test_balance_and_position() {
+//     let (mut write_private, mut read_private) = connect_okx_account(key.clone(), secret.clone(), passphrase.clone()).await;
+//     let msg = read_private.next().await.unwrap();
+//     match msg { 
+//          Message::Text(text) => {
+//             let parsed_msg: Value = serde_json::from_str(&text).expect("Failed to parse JSON");
+//             let channel: String = parsed_msg["arg"]["channel"].as_str().unwrap_or("Unknown").to_string();
+//             let data = &parsed_msg["data"];
+//             if data.is_null() {
+//                 info!("Receiving unprocessed msg from private websocket balance_and_position channel {:?}", parsed_msg);
+//             } else {
+//                 if channel == "balance_and_position" {
+//                     process_account_message(data).await;
+//                 } else {
+//                     panic!("Receiving unknown channel msg from private websocket balance_and_position channel {:?}", parsed_msg);
+//                 }
+//             }
+//         }
+//     }
+               
+// }
 

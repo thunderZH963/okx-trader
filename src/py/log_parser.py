@@ -4,8 +4,9 @@ import os
 from bidict import bidict
 import math
 logs = ["./log/active.log"]
-logs.extend(["./log/" + str(i) + ".log" for i in range(1, 17)])
+logs.extend(["./log/" + str(i) + ".log" for i in range(2, 17)])
 for log_file in logs:
+    print(log_file)
     fileHandler = open(log_file, "r")
     orderId2clientId = dict({})
     spotId2swapId = dict({})
@@ -138,7 +139,8 @@ for log_file in logs:
                         "threshold": threshold if threshold else "0",
                     }
             elif "Order successfully placed" in line:
-                pattern = r'clientId: "([^"]+)", ts: "([^"]+)", orderId: "([.*?]+)"'
+                print(line)
+                pattern = r'clientId: "([^"]+)", ts: "([^"]+)", orderId: "([^"]+)", msg is "([^"]+)"'
                 match = re.search(pattern, line.strip())
                 if match:
                     clientId = match.group(1)
