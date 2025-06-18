@@ -1,10 +1,17 @@
 import re
 import csv
 import os
-from bidict import bidict
 import math
+skip_ids = []
+with open("csv/okx_trade_info_final.csv", newline='', encoding='utf-8') as file:
+    reader = csv.reader(file)
+    next(reader)
+    for row in reader:
+        skip_ids.append(row[3])
+        skip_ids.append(row[4])
+
 logs = ["./log/active.log"]
-logs.extend(["./log/" + str(i) + ".log" for i in range(2, 17)])
+logs.extend(["./log/" + str(i) + ".log" for i in range(1, 17)])
 for log_file in logs:
     print(log_file)
     fileHandler = open(log_file, "r")
@@ -33,6 +40,8 @@ for log_file in logs:
 
     def write_one_trade(clientId, check = False):
         if not check or (check and clientId2info[clientId]["status"] != "filled"):
+            if clientId in skip_ids:
+                return
             client_info = {
                 "timestamp": clientId2info[clientId]["timestamp"],
                 "clientId": clientId,
@@ -55,6 +64,8 @@ for log_file in logs:
     def write_merge_two_trade(spot_id, swap_id, delete=True):
         spot_info = clientId2info[spot_id]
         swap_info = clientId2info[swap_id]
+        if spot_id in skip_ids or swap_id in skip_ids:
+                return
         trade_info = {
             "timestamp": spot_info["timestamp"],
             "symbol": spot_info["instId"],
