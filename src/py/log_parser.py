@@ -10,10 +10,12 @@ with open("csv/okx_trade_info_final.csv", newline='', encoding='utf-8') as file:
         skip_ids.append(row[3])
         skip_ids.append(row[4])
 
-logs = ["./log/active.log"]
-logs.extend(["./log/" + str(i) + ".log" for i in range(1, 17)])
-for log_file in logs:
-    print(log_file)
+log_dir = './log/'  # 替换为你的log目录路径
+file_paths = []
+for root, dirs, files in os.walk(log_dir):
+    for file in files:
+        file_paths.append(os.path.join(root, file))
+for log_file in file_paths:
     fileHandler = open(log_file, "r")
     orderId2clientId = dict({})
     spotId2swapId = dict({})
@@ -150,7 +152,6 @@ for log_file in logs:
                         "threshold": threshold if threshold else "0",
                     }
             elif "Order successfully placed" in line:
-                print(line)
                 pattern = r'clientId: "([^"]+)", ts: "([^"]+)", orderId: "([^"]+)", msg is "([^"]+)"'
                 match = re.search(pattern, line.strip())
                 if match:
@@ -177,7 +178,6 @@ for log_file in logs:
                 match = re.search(pattern, line.strip())
                 if match:
                     ordId = match.group(1)
-                    print(orderId2clientId)
                     clientId = orderId2clientId[ordId]
                     fillPx = match.group(2)
                     fillSz = match.group(3)
