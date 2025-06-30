@@ -450,9 +450,8 @@ async fn main() {
                             let _ = write_order.send(order_spot.clone().subscribe_message().into()).await;
                             info!("<<<<<<<send order_swap: clientId: {:?}, instId: {:?}, sz: {:?}, price: {:?}, timestamp: {:?}, threshold: {:?}", 
                                 order_swap.clone().id, order_swap.clone().inst_id, order_swap.clone().sz, order_swap.clone().price, get_timestamp(), order_swap.clone().threshold);
-                            let order_swap_info = order_swap.clone().subscribe_message().into();
                             // info!("[DEBUG] {}", order_swap_info);
-                            let _ = write_order.send(order_swap_info).await;
+                            let _ = write_order.send(order_swap.clone().subscribe_message().into()).await;
                             //let _ = write_order.send("ping".into()).await; //TODO: remove later
                         },
                         Ok(None) => {
@@ -485,12 +484,18 @@ async fn main() {
                                     info!("$$$$$$$$$$$$$$Order Channel: recv order msg: {:?}", parsed_msg);
                                     {
                                         let orderid2inst = ORDERID2INST.read().await;
-                                        let mut inst_id = match orderid2inst.get(&clientId.to_string()) {
-                                            Some(inst) => inst.to_string(),
-                                            None => String::new(),
+                                        let inst_id = if let Some(client_id_str) = clientId.as_str() {
+                                            orderid2inst.get(&(client_id_str.to_string())).unwrap()
+                                        } else {
+                                            // 处理非字符串类型
+                                            panic!("Error: clientId is not a string");
                                         };
                                         let mut inst_state_map = INST_STATE_MAP.write().await;
-                                        inst_state_map.remove(&inst_id); //TODO: only allow trade one time
+                                        inst_state_map.remove(inst_id); //TODO: only allow trade one time
+                                    }
+                                    {
+                                        let mut orderid2inst = ORDERID2INST.write().await;
+                                        orderid2inst.remove(&clientId.to_string());
                                     }
                                 }
                                 other => {

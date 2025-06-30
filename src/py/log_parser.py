@@ -3,12 +3,15 @@ import csv
 import os
 import math
 skip_ids = []
-with open("csv/okx_trade_info_final.csv", newline='', encoding='utf-8') as file:
-    reader = csv.reader(file)
-    next(reader)
-    for row in reader:
-        skip_ids.append(row[3])
-        skip_ids.append(row[4])
+try:
+    with open("csv/okx_trade_info_final.csv", newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        next(reader)
+        for row in reader:
+            skip_ids.append(row[3])
+            skip_ids.append(row[4])
+except:
+    pass
 
 log_dir = './log/'  # 替换为你的log目录路径
 file_paths = []
