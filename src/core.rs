@@ -114,7 +114,7 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
             let ccy2bal = CCY2BAL.lock().await;
             balance_usdt = ccy2bal.get("USDT").unwrap_or(&Decimal::zero()).clone();
             position_swap = ccy2bal.get(&swap_inst_id).unwrap_or(&Decimal::zero()).clone();
-            let true_position_spot = ccy2bal.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
+            true_position_spot = ccy2bal.get(&spot_inst_id).unwrap_or(&Decimal::zero()).clone();
             position_spot = (position_swap * swap_ctval).abs().min(true_position_spot.abs());
         }
         let is_open = orderbook.operation_type == OperationType::Open2;

@@ -16,6 +16,7 @@ for root, dirs, files in os.walk(log_dir):
     for file in files:
         file_paths.append(os.path.join(root, file))
 for log_file in file_paths:
+    print(log_file)
     fileHandler = open(log_file, "r")
     orderId2clientId = dict({})
     spotId2swapId = dict({})
@@ -178,7 +179,11 @@ for log_file in file_paths:
                 match = re.search(pattern, line.strip())
                 if match:
                     ordId = match.group(1)
-                    clientId = orderId2clientId[ordId]
+                    try:
+                        clientId = orderId2clientId[ordId]
+                    except:
+                        print("error[not found ordid]", line)
+                        continue
                     fillPx = match.group(2)
                     fillSz = match.group(3)
                     if fillPx == "":
