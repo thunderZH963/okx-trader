@@ -27,11 +27,12 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
         spot_inst_id = msg.clone();
     }
     // info!("###############Message Receiving Processor: computing engine begins to process swap/spot: {:?} {:?}", swap_inst_id, spot_inst_id);
-    
-    let inst_state_map = INST_STATE_MAP.read().await;
-    if inst_state_map.contains_key(&spot_inst_id) || inst_state_map.contains_key(&swap_inst_id) {
-        // info!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
-        return None;
+    {
+        let inst_state_map = INST_STATE_MAP.read().await;
+        if inst_state_map.contains_key(&spot_inst_id) || inst_state_map.contains_key(&swap_inst_id) {
+            // info!("###############Skipping this inst_id in compute_handle{:?}", inst_state_map);
+            return None;
+        }
     }
 
     /*
@@ -229,8 +230,12 @@ pub async fn core_compute(msg: String) -> Option<(Order, Order)>{
 
         let mut trade_qty_decimal = Decimal::from_f64(trade_qty).unwrap();
         if is_close {
-            if position_spot.to_f64().unwrap() <= 0.0 {
+            if position_spot.to_f64().unwrap() <= 0.0 || true_position_spot.to_f64().unwrap() <= 0.0{
                 info!("unsatisfied [position_spot] {:?} for spot_inst_id: {:?}", position_spot, spot_inst_id);
+                return None;
+            }
+            if position_swap.to_f64().unwrap() > 0.0 {
+                info!("unsatisfied [position_swap] {:?} for swap_inst_id: {:?}", position_swap, swap_inst_id);
                 return None;
             }
             if trade_qty * unit_price_spot > *MAX_CLOSE_VALUE // Maximum close price constraint
